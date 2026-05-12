@@ -12,6 +12,7 @@ Visor astronomico web con tres modos de representacion del cielo, timeline noctu
 - Busqueda de objetos y resaltado en el mapa.
 - Configuracion de ubicacion con:
   - Nombre de ubicacion.
+  - Localizaciones favoritas guardables y seleccionables.
   - Coordenadas GPS por clic en mapa.
   - Busqueda de direccion (geocodificacion).
   - Carga de perfil de horizonte en SVG.
@@ -21,7 +22,7 @@ Visor astronomico web con tres modos de representacion del cielo, timeline noctu
 - `index.php`: render principal y calculos en servidor.
 - `app.js`: logica de render y controles de interaccion.
 - `style.css`: estilos globales.
-- `config.json`: configuracion persistente (ubicacion y SVG de horizonte).
+- `config.json`: configuracion persistente (ubicacion actual, favoritos y SVG de horizonte).
 - `save_config.php`: endpoint para guardar configuracion y subir SVG.
 - `manual.html`: manual de usuario accesible desde la UI.
 
@@ -30,7 +31,7 @@ Visor astronomico web con tres modos de representacion del cielo, timeline noctu
 1. Servir el proyecto en tu servidor PHP (por ejemplo, `/var/www/html/astro`).
 2. Abrir `index.php` en navegador.
 3. Ajustar fecha/hora y explorar las vistas.
-4. Entrar en `Configuracion` para fijar ubicacion y horizonte.
+4. Entrar en `Configuracion` para fijar ubicacion, guardar favoritas y ajustar horizonte.
 
 ## Manual de usuario
 

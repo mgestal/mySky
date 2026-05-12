@@ -7,7 +7,8 @@ $defaultConfig = [
   'locationName' => 'A Coruña',
   'lat' => 43.37,
   'lon' => -8.41,
-  'horizonSvg' => 'PeakFinder_n43.25450_w8.39506_s_32_3_e_M_m_d.svg',
+  'horizonSvg' => 'default.svg',
+  'favorites' => [],
 ];
 $loadedConfig = $defaultConfig;
 if (is_file($configPath)) {
@@ -24,6 +25,30 @@ if ($lon < -180 || $lon > 180) $lon = -8.41;
 $locationName = isset($loadedConfig['locationName']) ? trim((string)$loadedConfig['locationName']) : 'A Coruña';
 if ($locationName === '') $locationName = 'A Coruña';
 $horizonSvg = is_string($loadedConfig['horizonSvg'] ?? null) ? $loadedConfig['horizonSvg'] : $defaultConfig['horizonSvg'];
+if ($horizonSvg === '') {
+  $horizonSvg = $defaultConfig['horizonSvg'];
+}
+$favorites = [];
+if (isset($loadedConfig['favorites']) && is_array($loadedConfig['favorites'])) {
+  foreach ($loadedConfig['favorites'] as $favorite) {
+    if (!is_array($favorite)) continue;
+    $favoriteName = trim((string)($favorite['locationName'] ?? ''));
+    $favoriteLat = isset($favorite['lat']) ? (float)$favorite['lat'] : null;
+    $favoriteLon = isset($favorite['lon']) ? (float)$favorite['lon'] : null;
+    if ($favoriteName === '' || !is_float($favoriteLat) || !is_float($favoriteLon)) continue;
+    if ($favoriteLat < -90 || $favoriteLat > 90 || $favoriteLon < -180 || $favoriteLon > 180) continue;
+    $favoriteHorizonSvg = trim((string)($favorite['horizonSvg'] ?? ''));
+    if ($favoriteHorizonSvg === '') {
+      $favoriteHorizonSvg = 'default.svg';
+    }
+    $favorites[] = [
+      'locationName' => $favoriteName,
+      'lat' => round($favoriteLat, 6),
+      'lon' => round($favoriteLon, 6),
+      'horizonSvg' => $favoriteHorizonSvg,
+    ];
+  }
+}
 
 $tz = new DateTimeZone('Europe/Madrid');
 
@@ -305,7 +330,10 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
 .config-search-row button{background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:8px;padding:10px 12px;font-weight:900;cursor:pointer}
 .config-fields{display:grid;gap:10px}
 .config-fields label{display:grid;gap:6px;font-size:13px;color:#cddbed;font-weight:700}
-.config-fields input{appearance:none;-webkit-appearance:none;background:#081220;color:#eef7ff;border:1px solid #52657e;border-radius:8px;padding:10px 11px;font-weight:700;min-width:0}
+.config-fields input,.config-fields select{appearance:none;-webkit-appearance:none;background:#081220;color:#eef7ff;border:1px solid #52657e;border-radius:8px;padding:10px 11px;font-weight:700;min-width:0}
+.config-hint{font-size:12px;color:#9eb1cc;line-height:1.35}
+.config-fields-actions{display:flex;gap:10px;flex-wrap:wrap}
+.config-secondary-btn{background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:8px;padding:10px 12px;font-weight:900;cursor:pointer}
 .config-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
 .config-status{min-height:20px;font-size:12px;color:#9eb1cc}
 @media(max-width:900px){.config-grid{grid-template-columns:1fr}.config-map{height:300px}}
@@ -607,6 +635,16 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
       </div>
       <div class="config-fields">
         <label>
+          Localizaciones favoritas
+          <select id="configFavoritesSelect">
+            <option value="">Selecciona una favorita...</option>
+            <?php foreach ($favorites as $favorite): ?>
+                      <option value='<?= htmlspecialchars(json_encode($favorite, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8') ?>'><?= htmlspecialchars($favorite['locationName']) ?> · <?= htmlspecialchars((string)$favorite['lat']) ?>, <?= htmlspecialchars((string)$favorite['lon']) ?><?= !empty($favorite['horizonSvg']) ? ' · Horizonte guardado' : '' ?></option>
+            <?php endforeach; ?>
+          </select>
+          <div class="config-hint">Las favoritas pueden guardar también su perfil de horizonte.</div>
+        </label>
+        <label>
           Nombre de la ubicación
           <input id="configLocationName" type="text" maxlength="80" value="<?= htmlspecialchars($locationName) ?>">
         </label>
@@ -623,6 +661,9 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
           <input id="configSvgFile" type="file" accept=".svg,image/svg+xml">
         </label>
         <div class="config-status" id="configStatus">Haz clic en el mapa para elegir coordenadas.</div>
+        <div class="config-fields-actions">
+          <button type="button" id="saveFavoriteBtn" class="config-secondary-btn">Guardar como favorita</button>
+        </div>
       </div>
     </div>
     <div class="config-actions">
@@ -638,6 +679,7 @@ window.ASTRO_DATA = {
   lat: <?= js($lat) ?>,
   lon: <?= js($lon) ?>,
   horizonSvg: <?= js($horizonSvg) ?>,
+  favoriteLocations: <?= js($favorites) ?>,
   dayBaseDate: <?= js($todayDateObj->format('Y-m-d')) ?>,
   moonIllumination: <?= js($moonIllumination) ?>,
   sunrise: <?= js($sunrise) ?>,

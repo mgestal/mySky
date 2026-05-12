@@ -82,6 +82,7 @@ openConfigModalBtn=document.getElementById('openConfigModal'),
 configModal=document.getElementById('configModal'),
 closeConfigModalBtn=document.getElementById('closeConfigModal'),
 configMapEl=document.getElementById('configMap'),
+configFavoritesSelect=document.getElementById('configFavoritesSelect'),
 configLocationNameInput=document.getElementById('configLocationName'),
 configLatInput=document.getElementById('configLat'),
 configLonInput=document.getElementById('configLon'),
@@ -89,6 +90,7 @@ configSvgFileInput=document.getElementById('configSvgFile'),
 configAddressSearchInput=document.getElementById('configAddressSearch'),
 configAddressSearchBtn=document.getElementById('configAddressSearchBtn'),
 configStatus=document.getElementById('configStatus'),
+saveFavoriteBtn=document.getElementById('saveFavoriteBtn'),
 saveConfigBtn=document.getElementById('saveConfigBtn');
 
 let speed=1,timer=null;
@@ -98,6 +100,7 @@ let satelliteEnabled=false;
 let LAT=Number(window.ASTRO_DATA?.lat ?? 43.37);
 let LON=Number(window.ASTRO_DATA?.lon ?? -8.41);
 let LOCATION_NAME=String(window.ASTRO_DATA?.locationName || 'A Coruña');
+let FAVORITE_LOCATIONS=Array.isArray(window.ASTRO_DATA?.favoriteLocations) ? [...window.ASTRO_DATA.favoriteLocations] : [];
 const PAN_FOV=180;
 let PEAKFINDER_FILE=String(window.ASTRO_DATA?.horizonSvg || 'PeakFinder_n43.25450_w8.39506_s_32_3_e_M_m_d.svg');
 const PEAKFINDER_X_START=240;
@@ -498,6 +501,51 @@ function setSatelliteLayerEnabled(enabled){
 let configMap=null;
 let configMarker=null;
 
+function syncFavoriteLocations(favorites){
+  FAVORITE_LOCATIONS=Array.isArray(favorites) ? favorites.filter(favorite => favorite && Number.isFinite(Number(favorite.lat)) && Number.isFinite(Number(favorite.lon)) && String(favorite.locationName || '').trim()) : [];
+  if(window.ASTRO_DATA) window.ASTRO_DATA.favoriteLocations=FAVORITE_LOCATIONS;
+  if(!configFavoritesSelect) return;
+
+  const currentValue=configFavoritesSelect.value;
+  configFavoritesSelect.innerHTML='<option value="">Selecciona una favorita...</option>';
+  FAVORITE_LOCATIONS.forEach(favorite => {
+    const option=document.createElement('option');
+    option.value=JSON.stringify(favorite);
+    const horizonSvg=String(favorite.horizonSvg || '').trim();
+    const horizonLabel=horizonSvg && horizonSvg!=='default.svg' ? ' · Horizonte guardado' : ' · Horizonte por defecto';
+    option.textContent=`${favorite.locationName} · ${Number(favorite.lat).toFixed(6)}, ${Number(favorite.lon).toFixed(6)}${horizonLabel}`;
+    configFavoritesSelect.appendChild(option);
+  });
+  if([...configFavoritesSelect.options].some(option => option.value===currentValue)){
+    configFavoritesSelect.value=currentValue;
+  }
+}
+
+function applyFavoriteSelection(rawValue){
+  if(!rawValue) return;
+  try{
+    const favorite=JSON.parse(rawValue);
+    const lat=Number(favorite.lat);
+    const lon=Number(favorite.lon);
+    const locationName=String(favorite.locationName || '').trim();
+    const favoriteHorizonSvg=String(favorite.horizonSvg || '').trim();
+    const horizonSvgToLoad=favoriteHorizonSvg || 'default.svg';
+    if(!locationName || !Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Favorita inválida');
+    if(configLocationNameInput) configLocationNameInput.value=locationName;
+    if(configLatInput) configLatInput.value=lat.toFixed(6);
+    if(configLonInput) configLonInput.value=lon.toFixed(6);
+    if(configMarker) configMarker.setLatLng([lat,lon]);
+    if(configMap) configMap.setView([lat,lon],13);
+    PEAKFINDER_FILE=horizonSvgToLoad;
+    if(window.ASTRO_DATA) window.ASTRO_DATA.horizonSvg=horizonSvgToLoad;
+    loadHorizonProfile();
+    queueSkyUpdate();
+    if(configStatus) configStatus.textContent=`Favorita cargada: ${locationName}`;
+  }catch(error){
+    if(configStatus) configStatus.textContent='No se pudo cargar la favorita seleccionada.';
+  }
+}
+
 function openConfigModal(){
   if(!configModal) return;
   configModal.classList.add('open');
@@ -506,6 +554,7 @@ function openConfigModal(){
   if(configLatInput) configLatInput.value=String(LAT.toFixed(6));
   if(configLonInput) configLonInput.value=String(LON.toFixed(6));
   if(configLocationNameInput) configLocationNameInput.value=LOCATION_NAME;
+  syncFavoriteLocations(FAVORITE_LOCATIONS);
 
   if(typeof L === 'undefined' || !configMapEl) return;
   if(!configMap){
@@ -527,6 +576,46 @@ function openConfigModal(){
     if(configMarker) configMarker.setLatLng([LAT,LON]);
   }
   setTimeout(()=>{ if(configMap) configMap.invalidateSize(); },120);
+}
+
+async function saveFavoriteLocation(){
+  if(!configLatInput || !configLonInput || !saveFavoriteBtn) return;
+  const lat=Number(configLatInput.value);
+  const lon=Number(configLonInput.value);
+  const locationName=configLocationNameInput ? configLocationNameInput.value.trim() : '';
+
+  if(!locationName){
+    if(configStatus) configStatus.textContent='Indica un nombre para guardar la favorita.';
+    return;
+  }
+  if(!Number.isFinite(lat) || lat<-90 || lat>90 || !Number.isFinite(lon) || lon<-180 || lon>180){
+    if(configStatus) configStatus.textContent='Coordenadas inválidas. Revisa los rangos.';
+    return;
+  }
+
+  const formData=new FormData();
+  formData.append('action','save_favorite');
+  formData.append('locationName',locationName);
+  formData.append('lat',String(lat));
+  formData.append('lon',String(lon));
+  formData.append('currentHorizonSvg',PEAKFINDER_FILE);
+  if(configSvgFileInput && configSvgFileInput.files && configSvgFileInput.files[0]){
+    formData.append('horizonSvg',configSvgFileInput.files[0]);
+  }
+
+  saveFavoriteBtn.disabled=true;
+  if(configStatus) configStatus.textContent='Guardando favorita...';
+  try{
+    const response=await fetch('save_config.php',{method:'POST',body:formData});
+    const data=await response.json();
+    if(!response.ok || !data.ok) throw new Error(data && data.error ? data.error : 'No se pudo guardar la favorita');
+    syncFavoriteLocations(data.config.favorites || FAVORITE_LOCATIONS);
+    if(configStatus) configStatus.textContent=`Favorita guardada: ${locationName}`;
+  }catch(error){
+    if(configStatus) configStatus.textContent=`Error al guardar favorita: ${error.message}`;
+  }finally{
+    saveFavoriteBtn.disabled=false;
+  }
 }
 
 function closeConfigModal(){
@@ -586,6 +675,7 @@ async function saveConfiguration(){
   formData.append('locationName',locationName || 'A Coruña');
   formData.append('lat',String(lat));
   formData.append('lon',String(lon));
+  formData.append('currentHorizonSvg',PEAKFINDER_FILE);
   if(configSvgFileInput && configSvgFileInput.files && configSvgFileInput.files[0]){
     formData.append('horizonSvg',configSvgFileInput.files[0]);
   }
@@ -1530,6 +1620,12 @@ if(configModal){
 }
 if(saveConfigBtn){
   saveConfigBtn.addEventListener('click',saveConfiguration);
+}
+if(saveFavoriteBtn){
+  saveFavoriteBtn.addEventListener('click',saveFavoriteLocation);
+}
+if(configFavoritesSelect){
+  configFavoritesSelect.addEventListener('change',()=>applyFavoriteSelection(configFavoritesSelect.value));
 }
 if(satelliteLayerToggle){
   satelliteLayerToggle.addEventListener('change',()=>setSatelliteLayerEnabled(satelliteLayerToggle.checked));
