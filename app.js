@@ -64,6 +64,11 @@ dayCurrentLabel=document.getElementById('dayCurrentLabel'),
 skySvg360=document.getElementById('skySvg360'),
 sky360Rotate=document.getElementById('sky360Rotate'),
 heading360=document.getElementById('heading360'),
+satelliteControlsRow=document.getElementById('satelliteControlsRow'),
+satelliteLayerToggle=document.getElementById('satelliteLayerToggle'),
+satZoomIn=document.getElementById('satZoomIn'),
+satZoomOut=document.getElementById('satZoomOut'),
+satellite360El=document.getElementById('satellite360'),
 inclinationSvg=document.getElementById('inclinationSvg'),
 inclMwPath=document.getElementById('inclMwPath'),
 inclGcMarker=document.getElementById('inclGcMarker'),
@@ -89,6 +94,7 @@ saveConfigBtn=document.getElementById('saveConfigBtn');
 let speed=1,timer=null;
 let panCenterAz=180;
 let skyCenterAz=0;
+let satelliteEnabled=false;
 let LAT=Number(window.ASTRO_DATA?.lat ?? 43.37);
 let LON=Number(window.ASTRO_DATA?.lon ?? -8.41);
 let LOCATION_NAME=String(window.ASTRO_DATA?.locationName || 'A Coruña');
@@ -102,6 +108,7 @@ const HORIZON_SAMPLES=720;
 const layerState={planets:false,constellations:false,deepSky:false};
 let selectedObjectId=null;
 let horizonAltitudes=null;
+let satelliteMap=null;
 
 const gcAltValues=document.querySelectorAll('[data-stat="gcAlt"]');
 const gcAzValues=document.querySelectorAll('[data-stat="gcAz"]');
@@ -179,6 +186,10 @@ function setView(mode){
   btn360.classList.toggle('active',is360);
   btnPanorama.classList.toggle('active',isPanorama);
   if(btnInclination) btnInclination.classList.toggle('active',isInclination);
+  if(satelliteControlsRow) satelliteControlsRow.style.display=is360?'flex':'none';
+  if(is360 && satelliteEnabled && satelliteMap){
+    setTimeout(()=>{ if(satelliteMap) satelliteMap.invalidateSize(); },80);
+  }
   localStorage.setItem('selectedView',mode);
 }
 
@@ -429,6 +440,59 @@ async function loadHorizonProfile(){
 function ensureValidCoordinates(){
   if(!Number.isFinite(LAT) || LAT<-90 || LAT>90) LAT=43.37;
   if(!Number.isFinite(LON) || LON<-180 || LON>180) LON=-8.41;
+}
+
+function updateSatellite360Rotation(){
+  if(!satellite360El) return;
+  satellite360El.style.transform=`rotate(${-skyCenterAz}deg)`;
+}
+
+function initSatellite360Map(){
+  if(typeof L==='undefined' || !satellite360El || satelliteMap) return;
+  satelliteMap=L.map(satellite360El,{
+    zoomControl:false,
+    attributionControl:true,
+    dragging:false,
+    scrollWheelZoom:false,
+    doubleClickZoom:false,
+    boxZoom:false,
+    keyboard:false,
+    touchZoom:false
+  }).setView([LAT,LON],15);
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+    attribution:'Tiles &copy; Esri'
+  }).addTo(satelliteMap);
+
+  updateSatellite360Rotation();
+}
+
+function setSatelliteLayerEnabled(enabled){
+  satelliteEnabled=!!enabled;
+  if(satelliteLayerToggle) satelliteLayerToggle.checked=satelliteEnabled;
+  if(satZoomIn) satZoomIn.disabled=!satelliteEnabled;
+  if(satZoomOut) satZoomOut.disabled=!satelliteEnabled;
+
+  if(satelliteEnabled){
+    initSatellite360Map();
+    if(satellite360El) satellite360El.classList.add('active');
+    const skyBg360=document.getElementById('skyBg360');
+    if(skyBg360) skyBg360.classList.add('hidden');
+    if(horizonProfile360) horizonProfile360.style.display='none';
+    if(horizonFill360) horizonFill360.style.display='none';
+    if(satelliteMap){
+      satelliteMap.setView([LAT,LON],satelliteMap.getZoom()||15);
+      setTimeout(()=>{ if(satelliteMap) satelliteMap.invalidateSize(); },80);
+    }
+  }else{
+    if(satellite360El) satellite360El.classList.remove('active');
+    const skyBg360=document.getElementById('skyBg360');
+    if(skyBg360) skyBg360.classList.remove('hidden');
+    if(horizonProfile360) horizonProfile360.style.display='';
+    if(horizonFill360) horizonFill360.style.display='';
+  }
+
+  localStorage.setItem('satelliteLayer360',satelliteEnabled?'1':'0');
 }
 
 let configMap=null;
@@ -1101,6 +1165,7 @@ function movePanMarker(el,p,offsetX,offsetY){
 
 function updateDirections360(){
   if(sky360Rotate) sky360Rotate.setAttribute('transform',`rotate(${-skyCenterAz},320,320)`);
+  updateSatellite360Rotation();
   const dyn=document.getElementById('dynamicDirections360');
   if(dyn){
     const dirs=[
@@ -1404,25 +1469,42 @@ if(skyPanel){
 }
 
 if(skySvg360){
+  const updateSky360Cursor=(ctrlPressed=false)=>{
+    if(!skySvg360) return;
+    if(dragging360){
+      skySvg360.style.cursor=(ctrlPressed && satelliteEnabled) ? 'move' : 'grabbing';
+      return;
+    }
+    skySvg360.style.cursor=(ctrlPressed && satelliteEnabled) ? 'move' : 'grab';
+  };
   let dragging360=false,lastX360=0,activePointerId360=null;
   skySvg360.addEventListener('pointerdown',e=>{
     if(e.button!==0) return;
     dragging360=true;
     activePointerId360=e.pointerId;
     lastX360=e.clientX;
-    skySvg360.style.cursor='grabbing';
+    skySvg360._lastY360=e.clientY;
+    updateSky360Cursor(e.ctrlKey);
     skySvg360.setPointerCapture(e.pointerId);
   });
   skySvg360.addEventListener('pointermove',e=>{
     if(!dragging360) return;
     const dx=e.clientX-lastX360;
+    const dy=e.clientY-(skySvg360._lastY360 ?? e.clientY);
     lastX360=e.clientX;
+    skySvg360._lastY360=e.clientY;
+    updateSky360Cursor(e.ctrlKey);
+    if(e.ctrlKey && satelliteEnabled && satelliteMap){
+      satelliteMap.panBy([-dx,-dy],{animate:false});
+      return;
+    }
     skyCenterAz=norm360(skyCenterAz+dx*0.35);
     queueSkyUpdate();
   });
   function endDrag360(){
     dragging360=false;
-    skySvg360.style.cursor='grab';
+    skySvg360._lastY360=null;
+    updateSky360Cursor(false);
     if(activePointerId360!==null && skySvg360.hasPointerCapture(activePointerId360)) skySvg360.releasePointerCapture(activePointerId360);
     activePointerId360=null;
   }
@@ -1431,6 +1513,8 @@ if(skySvg360){
   skySvg360.addEventListener('lostpointercapture',endDrag360);
   window.addEventListener('pointerup',endDrag360);
   window.addEventListener('blur',endDrag360);
+  window.addEventListener('keydown',e=>{ if(e.key==='Control') updateSky360Cursor(true); });
+  window.addEventListener('keyup',e=>{ if(e.key==='Control') updateSky360Cursor(false); });
 }
 
 if(openConfigModalBtn){
@@ -1446,6 +1530,19 @@ if(configModal){
 }
 if(saveConfigBtn){
   saveConfigBtn.addEventListener('click',saveConfiguration);
+}
+if(satelliteLayerToggle){
+  satelliteLayerToggle.addEventListener('change',()=>setSatelliteLayerEnabled(satelliteLayerToggle.checked));
+}
+if(satZoomIn){
+  satZoomIn.addEventListener('click',()=>{
+    if(satelliteEnabled && satelliteMap) satelliteMap.setZoom(Math.min(19,satelliteMap.getZoom()+1));
+  });
+}
+if(satZoomOut){
+  satZoomOut.addEventListener('click',()=>{
+    if(satelliteEnabled && satelliteMap) satelliteMap.setZoom(Math.max(2,satelliteMap.getZoom()-1));
+  });
 }
 if(configAddressSearchBtn){
   configAddressSearchBtn.addEventListener('click',searchAddressAndMoveMap);
@@ -1463,6 +1560,7 @@ document.addEventListener('keydown',e=>{
 });
 
 ensureValidCoordinates();
+setSatelliteLayerEnabled(localStorage.getItem('satelliteLayer360')==='1');
 
 setView(localStorage.getItem('selectedView')||'360');
 updateSky();

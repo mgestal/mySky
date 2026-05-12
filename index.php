@@ -274,6 +274,20 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
 .incl-text{fill:#dbe9fd;font-size:12px;font-weight:800}
 .incl-text-strong{fill:var(--cyan);font-size:12px;font-weight:900}
 .inclination-meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;padding:0 4px;color:#cfe0f6;font-size:12px;font-weight:700}
+.controls{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.controls-row{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap;width:100%}
+.controls-row.compact-right{justify-content:flex-end}
+.auto-speed-row{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:nowrap;white-space:nowrap;max-width:100%}
+.sat-block{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.sat-layer-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.sat-drag-hint{color:#9ec5f4;font-size:12px;font-weight:700;white-space:nowrap}
+.sat-zoom-controls{display:flex;gap:6px}
+.sat-zoom-btn{background:#18283d;border:1px solid #2b4260;color:#dce7f5;border-radius:8px;padding:8px 11px;font-weight:900;cursor:pointer;line-height:1}
+.sat-zoom-btn:disabled{opacity:.45;cursor:not-allowed}
+#satellite360{position:absolute;inset:4.8%;border-radius:50%;overflow:hidden;display:none;z-index:0;transform-origin:center center;will-change:transform}
+#satellite360.active{display:block}
+#satellite360 .leaflet-control-attribution{display:none}
+.sky-bg-360.hidden{display:none}
 .config-card{padding:14px 16px}
 .config-card p{margin:0;color:#cedaeb;line-height:1.45}
 .config-open-btn{width:100%;display:block;text-align:center;text-decoration:none;background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:10px;padding:12px;font-weight:900;cursor:pointer}
@@ -370,17 +384,35 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
             <p>Vistas 360 y panorámica son arrastables. Inclinación basada en encuadre 3:2 vertical.</p>
           </div>
           <div class="controls">
-            <div class="view-toggle">
-              <button type="button" id="btn360" class="active">Vista 360°</button>
-              <button type="button" id="btnPanorama">Panorámica</button>
-              <button type="button" id="btnInclination">Inclinación</button>
+            <div class="controls-row">
+              <div class="view-toggle">
+                <button type="button" id="btn360" class="active">Vista 360°</button>
+                <button type="button" id="btnPanorama">Panorámica</button>
+                <button type="button" id="btnInclination">Inclinación</button>
+              </div>
             </div>
-            <label class="switch-label">Animación automática <input id="autoPlay" type="checkbox"><span class="switch"></span></label>
-            <div class="speed">
-              <span>Velocidad:</span>
-              <button type="button" data-speed="0.5">0.5x</button>
-              <button type="button" class="active" data-speed="1">1x</button>
-              <button type="button" data-speed="2">2x</button>
+            <div class="controls-row compact-right">
+              <div class="auto-speed-row">
+                <label class="switch-label">Auto: <input id="autoPlay" type="checkbox"><span class="switch"></span></label>
+                <div class="speed">
+                  <span>Velocidad:</span>
+                  <button type="button" data-speed="0.5">0.5x</button>
+                  <button type="button" class="active" data-speed="1">1x</button>
+                  <button type="button" data-speed="2">2x</button>
+                </div>
+              </div>
+            </div>
+            <div id="satelliteControlsRow" class="controls-row compact-right">
+              <div class="sat-block">
+                <div class="sat-layer-controls">
+                  <label class="switch-label">Capa satélite <input id="satelliteLayerToggle" type="checkbox"><span class="switch"></span></label>
+                  <div class="sat-zoom-controls">
+                    <button type="button" id="satZoomOut" class="sat-zoom-btn" aria-label="Alejar mapa satélite">-</button>
+                    <button type="button" id="satZoomIn" class="sat-zoom-btn" aria-label="Acercar mapa satélite">+</button>
+                  </div>
+                </div>
+                <span class="sat-drag-hint">Ctrl + arrastrar: mover mapa</span>
+              </div>
             </div>
           </div>
         </div>
@@ -389,6 +421,7 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
           <div class="sky-stage" id="sky360Stage">
             <div class="panorama-help">Arrastra para rotar · <strong id="heading360">N · 0°</strong></div>
             <div class="sky-bg-360" id="skyBg360"></div>
+            <div id="satellite360" aria-label="Capa satélite para orientación sobre terreno"></div>
             <svg id="skySvg360" viewBox="0 0 640 640" role="img" aria-label="Vista circular 360 grados del cielo" style="cursor:grab">
               <circle class="horizon" cx="320" cy="320" r="238"/>
               <circle class="gridline" cx="320" cy="320" r="158"/>
