@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual de usuario - MySky</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root{--bg:#050d18;--line:#28415f;--text:#eaf2ff;--muted:#a9b9d1;--blue:#2f8cff;--panel:rgba(8,17,30,.92);--cyan:#32d4ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 85% 5%,#142c49 0,#050d18 46%,#020812 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.page{max-width:1100px;margin:0 auto;padding:24px 20px 48px}
+.header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+h1{margin:0;font-size:34px;line-height:1.1}
+.subtitle{margin-top:6px;color:var(--muted)}
+.back{display:inline-block;background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:10px;padding:10px 12px;font-weight:900;text-decoration:none}
+.grid{display:grid;gap:14px;margin-top:18px}
+.card{background:linear-gradient(160deg,rgba(17,31,49,.94),var(--panel));border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h2{margin:0 0 10px;color:var(--blue);font-size:18px}
+.card p{margin:0 0 8px;color:#cddbed;line-height:1.55}
+.card ul{margin:8px 0 0;padding-left:18px;color:#dce7f5;line-height:1.55}
+.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
+.toc a{display:block;padding:10px 12px;border:1px solid #2d4a70;border-radius:9px;color:#dce7f5;text-decoration:none;background:rgba(24,50,79,.5);font-weight:800}
+.steps{counter-reset:manual-step;display:grid;gap:10px}
+.step{position:relative;padding:12px 12px 12px 46px;border:1px solid #2a4566;border-radius:10px;background:rgba(13,27,44,.55)}
+.step:before{counter-increment:manual-step;content:counter(manual-step);position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#06101d;background:var(--cyan)}
+.shot{margin-top:12px;border:1px solid #395a80;border-radius:10px;overflow:hidden;background:#000}
+.shot img{display:block;width:100%;height:auto}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.shot h3{margin:0;padding:10px 12px;background:rgba(11,24,40,.9);border-bottom:1px solid #2f4f75;color:#cfe3ff;font-size:14px}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+@media(max-width:700px){h1{font-size:28px}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>Manual de usuario</h1>
+        <div class="subtitle">Guia paso a paso de MySky para planificacion astronomica y astrofotografia.</div>
+      </div>
+      <a class="back" href="index.php">Volver al visor</a>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Indice rapido</h2>
+        <div class="toc">
+          <a href="#inicio">Inicio rapido</a>
+          <a href="#vistas">Vistas del cielo</a>
+          <a href="#timeline">Timeline y eventos</a>
+          <a href="#capas">Capas y busqueda</a>
+          <a href="#config">Configuracion</a>
+          <a href="#capturas">Capturas y recursos</a>
+        </div>
+      </section>
+
+      <section class="card" id="inicio">
+        <h2>1. Inicio rapido</h2>
+        <div class="steps">
+          <div class="step"><p>Selecciona la <strong>fecha</strong> en la parte superior y pulsa Actualizar.</p></div>
+          <div class="step"><p>Ajusta la <strong>hora</strong> con el slider de timeline o usa animacion automatica.</p></div>
+          <div class="step"><p>Alterna entre <strong>Vista 360</strong>, <strong>Panoramica</strong> e <strong>Inclinacion</strong>.</p></div>
+          <div class="step"><p>Activa capas y busca objetos para centrar la sesion en tu objetivo.</p></div>
+          <div class="step"><p>Si cambias de ubicacion, abre Configuracion y guarda nombre, coordenadas y perfil SVG.</p></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. Resumen de interfaz</h2>
+        <p>La pantalla principal se divide en tres areas:</p>
+        <ul>
+          <li>Columna izquierda: resumen de tiempos astronomicos y meteorologia.</li>
+          <li>Zona central: visor del cielo (360, panoramica e inclinacion), timeline y control horario.</li>
+          <li>Columna derecha: capas de objetos, buscador y configuracion de ubicacion/horizonte.</li>
+        </ul>
+      </section>
+
+      <section class="card" id="vistas">
+        <h2>3. Vistas del cielo</h2>
+        <ul>
+          <li>Vista 360: cielo circular para orientacion global y eventos por azimut.</li>
+          <li>Panoramica: vista horizontal arrastrable para trabajar encuadres de foto.</li>
+          <li>Inclinacion: estimacion vertical de la via lactea con referencia del centro galactico.</li>
+        </ul>
+        <p>Usa el selector de hora y la reproduccion automatica para recorrer la noche.</p>
+      </section>
+
+      <section class="card" id="timeline">
+        <h2>4. Timeline y eventos</h2>
+        <p>La barra temporal representa del ocaso al amanecer e incluye hitos: fin de crepusculo, salida/ocultacion de via lactea, salida/puesta del centro galactico y amanecer.</p>
+        <p>Los marcadores de la grafica se recalculan segun la fecha seleccionada.</p>
+      </section>
+
+      <section class="card" id="capas">
+        <h2>5. Capas de objetos celestes</h2>
+        <ul>
+          <li>Planetas, constelaciones y deep-sky pueden activarse por separado.</li>
+          <li>El buscador filtra objetos por nombre o categoria.</li>
+          <li>Al seleccionar un objeto, se resalta y muestra su informacion de altitud/azimut.</li>
+        </ul>
+      </section>
+
+      <section class="card" id="config">
+        <h2>6. Configuracion de ubicacion</h2>
+        <ul>
+          <li>Nombre de ubicacion: etiqueta mostrada en cabecera y paneles informativos.</li>
+          <li>Mapa: haz clic para fijar coordenadas GPS.</li>
+          <li>Buscador de direccion: centra el mapa en una direccion concreta y rellena lat/lon.</li>
+          <li>Perfil SVG: permite cargar un horizonte personalizado.</li>
+        </ul>
+        <p>Al guardar, los datos quedan persistidos en <strong>config.json</strong>.</p>
+      </section>
+
+      <section class="card" id="capturas">
+        <h2>7. Capturas y recursos visuales</h2>
+        <p>Estas son las capturas de referencia del sistema. Se muestran automaticamente desde la carpeta <strong>capturas/</strong>.</p>
+        <div class="gallery">
+          <div class="shot">
+            <h3>Vista 360</h3>
+            <img src="capturas/vista-360.png" alt="Captura de la Vista 360">
+          </div>
+          <div class="shot">
+            <h3>Vista Panoramica</h3>
+            <img src="capturas/panoramica.png" alt="Captura de la Vista Panoramica">
+          </div>
+          <div class="shot">
+            <h3>Vista Inclinacion</h3>
+            <img src="capturas/inclinacion.png" alt="Captura de la Vista Inclinacion">
+          </div>
+          <div class="shot">
+            <h3>Timeline y selector de dia</h3>
+            <img src="capturas/timeline-dia.png" alt="Captura de timeline y selector de dia">
+          </div>
+          <div class="shot">
+            <h3>Modal de Configuracion</h3>
+            <img src="capturas/configuracion-modal.png" alt="Captura de la ventana de configuracion">
+          </div>
+          <div class="shot">
+            <h3>Fondo panoramico base</h3>
+            <img src="cielo360.png" alt="Imagen base de cielo usada en la panoramica">
+          </div>
+          <div class="shot">
+            <h3>Perfil de horizonte SVG (ejemplo)</h3>
+            <img src="PeakFinderXalo.svg" alt="Perfil de horizonte SVG de ejemplo">
+          </div>
+        </div>
+        <p class="note">Si alguna imagen no aparece, revisa que exista en la carpeta capturas con el nombre exacto indicado.</p>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

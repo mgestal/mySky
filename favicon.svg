@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MySky icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1b33"/>
+      <stop offset="1" stop-color="#133f66"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff8c2"/>
+      <stop offset="1" stop-color="#ffd870"/>
+    </linearGradient>
+    <filter id="mwGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.8"/>
+    </filter>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)"/>
+  <circle cx="39" cy="24" r="11" fill="url(#moon)"/>
+  <circle cx="43" cy="21" r="11" fill="#133f66"/>
+  <circle cx="19" cy="37" r="1.7" fill="#cfe8ff"/>
+  <circle cx="25" cy="28" r="1.4" fill="#cfe8ff"/>
+  <circle cx="28" cy="40" r="1.2" fill="#cfe8ff"/>
+  <circle cx="46" cy="39" r="1.4" fill="#cfe8ff"/>
+  <path d="M8 32 C18 26, 30 36, 34 54" stroke="#66f0a3" stroke-width="5.2" fill="none" stroke-linecap="round" opacity="0.34" filter="url(#mwGlow)"/>
+  <path d="M8 32 C18 25, 31 35, 34 54" stroke="#88ffc0" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+</svg>
