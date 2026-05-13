@@ -336,6 +336,11 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
 .config-secondary-btn{background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:8px;padding:10px 12px;font-weight:900;cursor:pointer}
 .config-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
 .config-status{min-height:20px;font-size:12px;color:#9eb1cc}
+.config-vis-section{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.config-vis-section h4{margin:0 0 10px;font-size:13px;color:#9eb1cc;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.config-vis-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
+.config-vis-label{display:flex;align-items:center;gap:8px;font-size:13px;color:#cddbed;font-weight:600;cursor:pointer;user-select:none}
+.config-vis-label input[type=checkbox]{width:15px;height:15px;accent-color:#5ba3f5;cursor:pointer;flex-shrink:0}
 @media(max-width:900px){.config-grid{grid-template-columns:1fr}.config-map{height:300px}}
 @media(max-width:1400px){.layout{grid-template-columns:360px minmax(0,1fr)!important}.right-column{grid-column:1/-1}.right-column .layers-card{position:static}}
 @media(max-width:1200px){.selected-panel dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -420,7 +425,7 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
               </div>
             </div>
             <div class="controls-row compact-right">
-              <div class="auto-speed-row">
+              <div class="auto-speed-row" id="autoSpeedRow">
                 <label class="switch-label">Auto: <input id="autoPlay" type="checkbox"><span class="switch"></span></label>
                 <div class="speed">
                   <span>Velocidad:</span>
@@ -555,14 +560,14 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
         <div class="timeline">
           
           <div class="timeline-labels">
-            <span class="orange" style="left:3%">Ocaso<br><?= $sunset ?></span>
-            <span style="left:15%">Fin crepúsculo<br>astronómico<br><?= $astroEnd ?></span>
-            <span class="green" style="left:28%">Salida VL<br><?= $vlRise ?></span>
-            <span class="violet" style="left:40%">CG<br><?= $gcRise ?></span>
-            <span class="violet" style="left:54%">Mejor momento<br><?= $gcBest ?></span>
-            <span class="red" style="left:70%">Ocultación VL<br><?= $vlSet ?></span>
-            <span class="violet" style="left:84%">Puesta CG<br><?= $gcSet ?></span>
-            <span class="orange" style="left:96%">Amanecer<br><?= $sunrise ?></span>
+            <span class="orange" style="left:3%" data-time="<?= htmlspecialchars($sunset, ENT_QUOTES, 'UTF-8') ?>">Ocaso<br><?= $sunset ?></span>
+            <span style="left:15%" data-time="<?= htmlspecialchars($astroEnd, ENT_QUOTES, 'UTF-8') ?>">Fin crepúsculo<br>astronómico<br><?= $astroEnd ?></span>
+            <span class="green" style="left:28%" data-time="<?= htmlspecialchars($vlRise, ENT_QUOTES, 'UTF-8') ?>">Salida VL<br><?= $vlRise ?></span>
+            <span class="violet" style="left:40%" data-time="<?= htmlspecialchars($gcRise, ENT_QUOTES, 'UTF-8') ?>">CG<br><?= $gcRise ?></span>
+            <span class="violet" style="left:54%" data-time="<?= htmlspecialchars($gcBest, ENT_QUOTES, 'UTF-8') ?>">Mejor momento<br><?= $gcBest ?></span>
+            <span class="red" style="left:70%" data-time="<?= htmlspecialchars($vlSet, ENT_QUOTES, 'UTF-8') ?>">Ocultación VL<br><?= $vlSet ?></span>
+            <span class="violet" style="left:84%" data-time="<?= htmlspecialchars($gcSet, ENT_QUOTES, 'UTF-8') ?>">Puesta CG<br><?= $gcSet ?></span>
+            <span class="orange" style="left:96%" data-time="<?= htmlspecialchars($sunrise, ENT_QUOTES, 'UTF-8') ?>">Amanecer<br><?= $sunrise ?></span>
           </div>
           <div class="bar">
             <div class="seg sunset"></div><div class="seg night"></div><div class="seg mw"></div><div class="seg gc"></div><div class="seg best"></div><div class="seg redseg"></div><div class="seg dawn"></div>
@@ -664,6 +669,17 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
         <div class="config-fields-actions">
           <button type="button" id="saveFavoriteBtn" class="config-secondary-btn">Guardar como favorita</button>
         </div>
+      </div>
+    </div>
+    <div class="config-vis-section">
+      <h4>Visibilidad en gráficas</h4>
+      <div class="config-vis-grid">
+        <label class="config-vis-label"><input type="checkbox" id="visGcMarkers" checked> Marcadores CG (salida/ocultación)</label>
+        <label class="config-vis-label"><input type="checkbox" id="visSunMarkers" checked> Marcadores Sol (salida/puesta)</label>
+        <label class="config-vis-label"><input type="checkbox" id="visSunPath" checked> Arco recorrido Sol</label>
+        <label class="config-vis-label"><input type="checkbox" id="visMoonMarkers" checked> Marcadores Luna (salida/puesta)</label>
+        <label class="config-vis-label"><input type="checkbox" id="visVlMarkers" checked> Marcadores VL (salida/ocultación)</label>
+        <label class="config-vis-label"><input type="checkbox" id="visAutoSpeed" checked> Controles de animación (Auto / Velocidad)</label>
       </div>
     </div>
     <div class="config-actions">

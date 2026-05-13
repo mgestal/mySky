@@ -93,6 +93,8 @@ configStatus=document.getElementById('configStatus'),
 saveFavoriteBtn=document.getElementById('saveFavoriteBtn'),
 saveConfigBtn=document.getElementById('saveConfigBtn');
 
+const timelineEventLabels=document.querySelectorAll('.timeline-labels [data-time]');
+
 let speed=1,timer=null;
 let panCenterAz=180;
 let skyCenterAz=0;
@@ -112,6 +114,15 @@ const layerState={planets:false,constellations:false,deepSky:false};
 let selectedObjectId=null;
 let horizonAltitudes=null;
 let satelliteMap=null;
+
+// Visibility settings for chart markers
+const visState={
+  gcMarkers: true,
+  sunMarkers: true,
+  sunPath: true,
+  moonMarkers: true,
+  vlMarkers: true,
+};
 
 const gcAltValues=document.querySelectorAll('[data-stat="gcAlt"]');
 const gcAzValues=document.querySelectorAll('[data-stat="gcAz"]');
@@ -883,6 +894,22 @@ function timeLabelToSliderValue(hhmm){
   return h<12 ? 1440+mins : mins;
 }
 
+function updateTimelineLabelPositions(){
+  if(!timelineEventLabels || !timelineEventLabels.length || !slider) return;
+  const min=Number(slider.min);
+  const max=Number(slider.max);
+  if(!Number.isFinite(min) || !Number.isFinite(max) || max<=min) return;
+
+  timelineEventLabels.forEach(label=>{
+    const timeLabel=String(label.dataset.time || '').trim();
+    const sliderValue=timeLabelToSliderValue(timeLabel);
+    if(sliderValue===null) return;
+    const t=(sliderValue-min)/(max-min);
+    const clamped=Math.max(0,Math.min(1,t));
+    label.style.left=`${(clamped*100).toFixed(2)}%`;
+  });
+}
+
 function sunEq(dateObj){
   const jd=julianDate(dateObj);
   const n=jd-2451545.0;
@@ -1338,28 +1365,44 @@ function updateSky(){
 
   const astro=window.ASTRO_DATA||{};
   const vlRiseDate=dateForTimeLabel(astro.vlRise,false);
-  if(vlRiseMarker360 && vlRiseDate){
-    const fallbackRiseAz=Number.isFinite(Number(astro.vlRiseAz)) ? Number(astro.vlRiseAz) : 124;
-    const vlRiseAz=estimateMilkyWayRiseAz(vlRiseDate,fallbackRiseAz);
-    placeEventMarker360(vlRiseMarker360,vlRiseAz,astro.vlRise);
+  if(visState.vlMarkers){
+    if(vlRiseMarker360 && vlRiseDate){
+      const fallbackRiseAz=Number.isFinite(Number(astro.vlRiseAz)) ? Number(astro.vlRiseAz) : 124;
+      const vlRiseAz=estimateMilkyWayRiseAz(vlRiseDate,fallbackRiseAz);
+      placeEventMarker360(vlRiseMarker360,vlRiseAz,astro.vlRise);
+    }
+  }else{
+    setMarkerVisibility(vlRiseMarker360,false);
   }
   const vlSetDate=dateForTimeLabel(astro.vlSet,false);
-  if(vlSetMarker360 && vlSetDate){
-    const fallbackSetAz=Number.isFinite(Number(astro.vlSetAz)) ? Number(astro.vlSetAz) : 185;
-    const vlSetAz=estimateMilkyWayCrossAz(vlSetDate,fallbackSetAz);
-    placeEventMarker360(vlSetMarker360,vlSetAz,astro.vlSet);
+  if(visState.vlMarkers){
+    if(vlSetMarker360 && vlSetDate){
+      const fallbackSetAz=Number.isFinite(Number(astro.vlSetAz)) ? Number(astro.vlSetAz) : 185;
+      const vlSetAz=estimateMilkyWayCrossAz(vlSetDate,fallbackSetAz);
+      placeEventMarker360(vlSetMarker360,vlSetAz,astro.vlSet);
+    }
+  }else{
+    setMarkerVisibility(vlSetMarker360,false);
   }
   const gcRiseDate=dateForTimeLabel(astro.gcRise,false);
-  if(gcRiseMarker360 && gcRiseDate){
-    const gcEq=galToEq(0,0);
-    const gcRiseAA=eqToAltAz(gcEq.ra,gcEq.dec,gcRiseDate);
-    placeEventMarker360(gcRiseMarker360,gcRiseAA.az,astro.gcRise);
+  if(visState.gcMarkers){
+    if(gcRiseMarker360 && gcRiseDate){
+      const gcEq=galToEq(0,0);
+      const gcRiseAA=eqToAltAz(gcEq.ra,gcEq.dec,gcRiseDate);
+      placeEventMarker360(gcRiseMarker360,gcRiseAA.az,astro.gcRise);
+    }
+  }else{
+    setMarkerVisibility(gcRiseMarker360,false);
   }
   const gcSetDate=dateForTimeLabel(astro.gcSet,false);
-  if(gcSetMarker360 && gcSetDate){
-    const gcEq=galToEq(0,0);
-    const gcSetAA=eqToAltAz(gcEq.ra,gcEq.dec,gcSetDate);
-    placeEventMarker360(gcSetMarker360,gcSetAA.az,astro.gcSet);
+  if(visState.gcMarkers){
+    if(gcSetMarker360 && gcSetDate){
+      const gcEq=galToEq(0,0);
+      const gcSetAA=eqToAltAz(gcEq.ra,gcEq.dec,gcSetDate);
+      placeEventMarker360(gcSetMarker360,gcSetAA.az,astro.gcSet);
+    }
+  }else{
+    setMarkerVisibility(gcSetMarker360,false);
   }
   const mwRiseSliderValue=timeLabelToSliderValue(astro.vlRise);
   const mwSetSliderValue=timeLabelToSliderValue(astro.vlSet);
@@ -1377,8 +1420,13 @@ function updateSky(){
   if(mw.markerVisible) mwMarker.setAttribute('transform',`translate(${mw.markerX-250}, ${mw.markerY-430})`);
 
   const solarPath=buildBodyPath('sun',dateObj);
-  if(sunPath) sunPath.setAttribute('d',solarPath.panD);
-  if(sunPath360) sunPath360.setAttribute('d',solarPath.skyD);
+  if(visState.sunPath){
+    if(sunPath){sunPath.setAttribute('d',solarPath.panD); sunPath.style.display='';}
+    if(sunPath360){sunPath360.setAttribute('d',solarPath.skyD); sunPath360.style.display='';}
+  }else{
+    if(sunPath) sunPath.style.display='none';
+    if(sunPath360) sunPath360.style.display='none';
+  }
 
   const sunAA=bodyAltAz('sun',dateObj);
   const sunP=projectPanorama(sunAA.az,sunAA.alt);
@@ -1390,29 +1438,37 @@ function updateSky(){
   const moonriseDate=dateForTimeLabel(astro.moonRise,false);
   const moonsetDate=dateForTimeLabel(astro.moonSet,false);
 
-  if(sunriseDate){
-    const aa=bodyAltAz('sun',sunriseDate);
-    movePanMarker(sunriseMarker,projectPanorama(aa.az,0.1),710,430);
-    move360Marker(sunriseMarker360,project360(aa.az,0.1));
-  }else{setMarkerVisibility(sunriseMarker,false); setMarkerVisibility(sunriseMarker360,false);}
+  if(visState.sunMarkers){
+    if(sunriseDate){
+      const aa=bodyAltAz('sun',sunriseDate);
+      movePanMarker(sunriseMarker,projectPanorama(aa.az,0.1),710,430);
+      move360Marker(sunriseMarker360,project360(aa.az,0.1));
+    }else{setMarkerVisibility(sunriseMarker,false); setMarkerVisibility(sunriseMarker360,false);}
+    if(sunsetDate){
+      const aa=bodyAltAz('sun',sunsetDate);
+      movePanMarker(sunsetMarker,projectPanorama(aa.az,0.1),710,430);
+      move360Marker(sunsetMarker360,project360(aa.az,0.1));
+    }else{setMarkerVisibility(sunsetMarker,false); setMarkerVisibility(sunsetMarker360,false);}
+  }else{
+    setMarkerVisibility(sunriseMarker,false); setMarkerVisibility(sunriseMarker360,false);
+    setMarkerVisibility(sunsetMarker,false); setMarkerVisibility(sunsetMarker360,false);
+  }
 
-  if(sunsetDate){
-    const aa=bodyAltAz('sun',sunsetDate);
-    movePanMarker(sunsetMarker,projectPanorama(aa.az,0.1),710,430);
-    move360Marker(sunsetMarker360,project360(aa.az,0.1));
-  }else{setMarkerVisibility(sunsetMarker,false); setMarkerVisibility(sunsetMarker360,false);}
-
-  if(moonriseDate){
-    const aa=bodyAltAz('moon',moonriseDate);
-    movePanMarker(moonriseMarker,projectPanorama(aa.az,0.1),710,430);
-    move360Marker(moonriseMarker360,project360(aa.az,0.1));
-  }else{setMarkerVisibility(moonriseMarker,false); setMarkerVisibility(moonriseMarker360,false);}
-
-  if(moonsetDate){
-    const aa=bodyAltAz('moon',moonsetDate);
-    movePanMarker(moonsetMarker,projectPanorama(aa.az,0.1),710,430);
-    move360Marker(moonsetMarker360,project360(aa.az,0.1));
-  }else{setMarkerVisibility(moonsetMarker,false); setMarkerVisibility(moonsetMarker360,false);}
+  if(visState.moonMarkers){
+    if(moonriseDate){
+      const aa=bodyAltAz('moon',moonriseDate);
+      movePanMarker(moonriseMarker,projectPanorama(aa.az,0.1),710,430);
+      move360Marker(moonriseMarker360,project360(aa.az,0.1));
+    }else{setMarkerVisibility(moonriseMarker,false); setMarkerVisibility(moonriseMarker360,false);}
+    if(moonsetDate){
+      const aa=bodyAltAz('moon',moonsetDate);
+      movePanMarker(moonsetMarker,projectPanorama(aa.az,0.1),710,430);
+      move360Marker(moonsetMarker360,project360(aa.az,0.1));
+    }else{setMarkerVisibility(moonsetMarker,false); setMarkerVisibility(moonsetMarker360,false);}
+  }else{
+    setMarkerVisibility(moonriseMarker,false); setMarkerVisibility(moonriseMarker360,false);
+    setMarkerVisibility(moonsetMarker,false); setMarkerVisibility(moonsetMarker360,false);
+  }
 
   if(moonDot){
     const moonAA=bodyAltAz('moon',dateObj);
@@ -1658,6 +1714,45 @@ document.addEventListener('keydown',e=>{
 ensureValidCoordinates();
 setSatelliteLayerEnabled(localStorage.getItem('satelliteLayer360')==='1');
 
+// Load and wire up visibility settings
+(function initVisibilitySettings(){
+  const keys=['gcMarkers','sunMarkers','sunPath','moonMarkers','vlMarkers','autoSpeed'];
+  const raw=localStorage.getItem('chartVisibility');
+  if(raw){
+    try{
+      const saved=JSON.parse(raw);
+      keys.forEach(k=>{ if(k in saved) visState[k]=!!saved[k]; });
+    }catch(e){}
+  }
+  const checkboxMap={
+    gcMarkers: document.getElementById('visGcMarkers'),
+    sunMarkers: document.getElementById('visSunMarkers'),
+    sunPath:    document.getElementById('visSunPath'),
+    moonMarkers:document.getElementById('visMoonMarkers'),
+    vlMarkers:  document.getElementById('visVlMarkers'),
+    autoSpeed:  document.getElementById('visAutoSpeed'),
+  };
+  const autoSpeedRow=document.getElementById('autoSpeedRow');
+  const applyAutoSpeedVisibility=()=>{
+    if(autoSpeedRow) autoSpeedRow.style.display=visState.autoSpeed?'':'none';
+  };
+  // Sync checkbox states from loaded values
+  keys.forEach(k=>{ if(checkboxMap[k]) checkboxMap[k].checked=visState[k]; });
+  // Listen for changes
+  keys.forEach(k=>{
+    const cb=checkboxMap[k];
+    if(!cb) return;
+    cb.addEventListener('change',()=>{
+      visState[k]=cb.checked;
+      localStorage.setItem('chartVisibility',JSON.stringify(visState));
+      if(k==='autoSpeed') applyAutoSpeedVisibility();
+      queueSkyUpdate();
+    });
+  });
+  applyAutoSpeedVisibility();
+})();
+
 setView(localStorage.getItem('selectedView')||'360');
+updateTimelineLabelPositions();
 updateSky();
 loadHorizonProfile();
