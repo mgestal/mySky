@@ -313,6 +313,7 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
 #satellite360.active{display:block}
 #satellite360 .leaflet-control-attribution{display:none}
 .sky-bg-360.hidden{display:none}
+.timeline-labels span.timeline-pin-right{transform:translateX(-100%);text-align:right}
 .config-card{padding:14px 16px}
 .config-card p{margin:0;color:#cedaeb;line-height:1.45}
 .config-open-btn{width:100%;display:block;text-align:center;text-decoration:none;background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:10px;padding:12px;font-weight:900;cursor:pointer}
@@ -563,16 +564,16 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
           
           <div class="timeline-labels">
             <span class="orange" style="left:3%" data-time="<?= htmlspecialchars($sunset, ENT_QUOTES, 'UTF-8') ?>">Ocaso<br><?= $sunset ?></span>
-            <span style="left:15%" data-time="<?= htmlspecialchars($astroEnd, ENT_QUOTES, 'UTF-8') ?>">Fin crepúsculo<br>astronómico<br><?= $astroEnd ?></span>
+            <span style="left:15%" data-time="<?= htmlspecialchars($astroEnd, ENT_QUOTES, 'UTF-8') ?>">Noche<br><?= $astroEnd ?></span>
             <span class="green" style="left:28%" data-time="<?= htmlspecialchars($vlRise, ENT_QUOTES, 'UTF-8') ?>">Salida VL<br><?= $vlRise ?></span>
             <span class="violet" style="left:40%" data-time="<?= htmlspecialchars($gcRise, ENT_QUOTES, 'UTF-8') ?>">CG<br><?= $gcRise ?></span>
-            <span class="violet" style="left:54%" data-time="<?= htmlspecialchars($gcBest, ENT_QUOTES, 'UTF-8') ?>">Mejor momento<br><?= $gcBest ?></span>
+            <span class="violet" style="left:54%" data-time="<?= htmlspecialchars($gcBest, ENT_QUOTES, 'UTF-8') ?>">Best<br><?= $gcBest ?></span>
             <span class="red" style="left:70%" data-time="<?= htmlspecialchars($vlSet, ENT_QUOTES, 'UTF-8') ?>">Ocultación VL<br><?= $vlSet ?></span>
             <span class="violet" style="left:84%" data-time="<?= htmlspecialchars($gcSet, ENT_QUOTES, 'UTF-8') ?>">Puesta CG<br><?= $gcSet ?></span>
-            <span class="orange" style="left:96%" data-time="<?= htmlspecialchars($sunrise, ENT_QUOTES, 'UTF-8') ?>">Amanecer<br><?= $sunrise ?></span>
+            <span class="orange" style="left:96%;transform:translateX(-100%);text-align:right" data-time="<?= htmlspecialchars($sunrise, ENT_QUOTES, 'UTF-8') ?>" data-shift="-4">Amanecer<br><?= $sunrise ?></span>
           </div>
           <div class="bar">
-            <div class="seg sunset"></div><div class="seg night"></div><div class="seg mw"></div><div class="seg gc"></div><div class="seg best"></div><div class="seg redseg"></div><div class="seg dawn"></div>
+            <div class="seg sunset"></div><div class="seg night"></div><div class="seg mw"></div><div class="seg gc"></div><div class="seg best"></div><div class="seg redseg"></div><div id="dawnSeg" class="seg dawn"></div>
             <input id="hourSlider" type="range" min="1200" max="2040" value="<?= $sliderValue ?>" step="5">
             <div id="thumbLabel">03:30</div>
           </div>

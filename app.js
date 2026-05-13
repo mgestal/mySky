@@ -7,6 +7,7 @@ function openCalendar(){
 const slider=document.getElementById('hourSlider'),
 selectedTime=document.getElementById('selectedTime'),
 thumbLabel=document.getElementById('thumbLabel'),
+dawnSeg=document.getElementById('dawnSeg'),
 nowLine=document.getElementById('nowLine'),
 nowAltitude=document.getElementById('nowAltitude'),
 gcMarker=document.getElementById('gcMarker'),
@@ -907,9 +908,35 @@ function updateTimelineLabelPositions(){
     const sliderValue=timeLabelToSliderValue(timeLabel);
     if(sliderValue===null) return;
     const t=(sliderValue-min)/(max-min);
-    const clamped=Math.max(0,Math.min(1,t));
-    label.style.left=`${(clamped*100).toFixed(2)}%`;
+    const shiftPct=Number(label.dataset.shift || 0);
+    const positionPct=(t*100)+shiftPct;
+    const clamped=Math.max(0,Math.min(100,positionPct));
+    label.style.left=`${clamped.toFixed(2)}%`;
+    label.style.top='';
   });
+}
+
+function updateTimelineSegments(){
+  if(!dawnSeg || !slider) return;
+  const min=Number(slider.min);
+  const max=Number(slider.max);
+  if(!Number.isFinite(min) || !Number.isFinite(max) || max<=min) return;
+
+  const sunriseValue=timeLabelToSliderValue(window.ASTRO_DATA?.sunrise);
+  if(sunriseValue===null){
+    dawnSeg.style.left='';
+    dawnSeg.style.right='0%';
+    dawnSeg.style.width='9%';
+    return;
+  }
+
+  const clampedStart=Math.max(min,Math.min(max,sunriseValue));
+  const startPct=((clampedStart-min)/(max-min))*100;
+  const widthPct=Math.max(0,100-startPct);
+
+  dawnSeg.style.right='auto';
+  dawnSeg.style.left=`${startPct.toFixed(2)}%`;
+  dawnSeg.style.width=`${widthPct.toFixed(2)}%`;
 }
 
 function sunEq(dateObj){
@@ -1781,5 +1808,6 @@ setSatelliteLayerEnabled(localStorage.getItem('satelliteLayer360')==='1');
 
 setView(localStorage.getItem('selectedView')||'360');
 updateTimelineLabelPositions();
+updateTimelineSegments();
 updateSky();
 loadHorizonProfile();
