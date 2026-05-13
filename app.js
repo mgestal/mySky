@@ -64,7 +64,6 @@ horizonProfilePanorama=document.getElementById('horizonProfilePanorama'),
 horizonFillPanorama=document.getElementById('horizonFillPanorama'),
 daySlider=document.getElementById('daySlider'),
 dayThumbLabel=document.getElementById('dayThumbLabel'),
-dayCurrentLabel=document.getElementById('dayCurrentLabel'),
 skySvg360=document.getElementById('skySvg360'),
 sky360Rotate=document.getElementById('sky360Rotate'),
 heading360=document.getElementById('heading360'),
@@ -1692,10 +1691,13 @@ if(daySlider){
     const selectedDate=new Date(todayObj);
     selectedDate.setDate(selectedDate.getDate()+offset);
     const dateStr=selectedDate.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
-    if(dayCurrentLabel) dayCurrentLabel.textContent=dateStr;
     if(dayThumbLabel) dayThumbLabel.textContent=dateStr;
   });
+  daySlider.addEventListener('input',()=>{
+    if(dayThumbLabel) dayThumbLabel.style.opacity='1';
+  });
   daySlider.addEventListener('change',()=>{
+    if(dayThumbLabel) dayThumbLabel.style.opacity='0';
     const todayObj=getDaySliderBaseDate();
     const offset=Number(daySlider.value);
     const selectedDate=new Date(todayObj);
@@ -1826,6 +1828,14 @@ if(openConfigModalBtn){
 }
 if(closeConfigModalBtn){
   closeConfigModalBtn.addEventListener('click',closeConfigModal);
+}
+const headerConfigBtn=document.getElementById('headerConfigBtn');
+const headerManualBtn=document.getElementById('headerManualBtn');
+if(headerConfigBtn){
+  headerConfigBtn.addEventListener('click',openConfigModal);
+}
+if(headerManualBtn){
+  headerManualBtn.addEventListener('click',()=>window.location.href='manual.html');
 }
 if(configModal){
   configModal.addEventListener('click',e=>{

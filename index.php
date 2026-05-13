@@ -407,7 +407,7 @@ $cloudCover = isset($weatherCurrent['cloud_cover']) ? (int)round((float)$weather
 $weatherLabel = weatherCodeLabel(isset($weatherCurrent['weather_code']) ? (int)$weatherCurrent['weather_code'] : null);
 $weatherForecast = buildWeatherForecastByOffset(
   (isset($weatherData['hourly']) && is_array($weatherData['hourly'])) ? $weatherData['hourly'] : [],
-  [6, 12, 24, 48, 72]
+  [6, 12, 24, 72]
 );
 
 $sunDecl   = sunDeclination($date);
@@ -460,30 +460,7 @@ $vlSetAz   = 360 - $vlRiseAz;
 .horizon-profile-panorama{fill:none;stroke:rgba(170,208,238,.62);stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round;opacity:.98;filter:drop-shadow(0 0 4px rgba(120,184,238,.45))}
 .panorama-ground-mask{display:none}
 .panorama-ground-cover{position:absolute;left:0;right:0;bottom:0;height:0;background:transparent}
-.sky-photo{z-index:0;clip-path:none}
-.sky-stars{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .2s ease;background-image:radial-gradient(circle,rgba(255,255,255,.92) 0 1px,rgba(255,255,255,0) 1.8px),radial-gradient(circle,rgba(209,228,255,.8) 0 .9px,rgba(209,228,255,0) 1.6px),radial-gradient(circle,rgba(255,255,255,.66) 0 .7px,rgba(255,255,255,0) 1.4px);background-size:120px 120px,180px 180px,280px 280px;background-repeat:repeat,repeat,repeat;background-position:center center,center center,center center;mix-blend-mode:screen}
-.sky-stars.active{opacity:.95}
-.sky-overlay{z-index:2}
-.sky-panel svg{max-height:none}
-.conditions-card{grid-column:1/-1}
-.weather-current{display:flex;gap:22px;flex-wrap:wrap;color:#d9e8f8}
-.weather-forecast{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-.weather-forecast h3{margin:0 0 10px;color:#9eb1cc;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
-.forecast-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.forecast-item{border:1px solid var(--line);border-radius:10px;padding:10px 10px 8px;background:rgba(255,255,255,.03)}
-.forecast-item header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
-.forecast-item strong{color:#f1f7ff;font-size:14px}
-.forecast-item header span{color:#9eb1cc;font-size:11px;white-space:nowrap}
-.forecast-item p{margin:4px 0;color:#d9e8f8;font-size:12px;line-height:1.35}
-.day-slider-section{margin-top:16px}.day-slider-wrap{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 16px}.day-label-left,.day-label-right{color:#9eb1cc;font-size:12px;font-weight:600;white-space:nowrap}.day-slider-container{position:relative;display:flex;align-items:center}.day-slider{width:100%;height:6px;border:none;border-radius:3px;background:linear-gradient(to right,#2a4a5f 0%,#1a3a4f 100%);-webkit-appearance:none;appearance:none;cursor:pointer;outline:none}.day-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#49ee61;cursor:grab;box-shadow:0 0 8px rgba(73,238,97,0.4);border:2px solid #06101d;transition:all 0.15s ease}.day-slider::-webkit-slider-thumb:active{cursor:grabbing;box-shadow:0 0 12px rgba(73,238,97,0.6)}.day-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#49ee61;cursor:grab;box-shadow:0 0 8px rgba(73,238,97,0.4);border:2px solid #06101d;transition:all 0.15s ease}.day-slider::-moz-range-thumb:active{cursor:grabbing;box-shadow:0 0 12px rgba(73,238,97,0.6)}.day-thumb-label{position:absolute;top:-24px;left:50%;transform:translateX(-50%);background:#06101d;color:#49ee61;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap;pointer-events:none;border:1px solid #49ee61;opacity:0;transition:opacity 0.15s ease}.day-slider:hover~.day-thumb-label,.day-slider:active~.day-thumb-label{opacity:1}.day-current-label{color:#9eb1cc;font-size:12px;font-weight:600;min-width:50px;text-align:center}
-.selected-panel{position:relative!important;top:auto!important;right:auto!important;width:auto!important;margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 16px 12px;background:rgba(255,255,255,.02);backdrop-filter:none;text-align:left}
-.selected-panel h3{margin:0 0 6px;color:var(--blue);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
-.selected-panel #selectedTime{font-size:28px;line-height:1.05;font-weight:900;margin-bottom:8px}
-.selected-panel dl{margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 12px}
-.selected-panel dt{color:#9eb1cc;font-size:11px;margin:0;text-transform:uppercase;letter-spacing:.04em}
-.selected-panel dd{margin:2px 0 0;font-weight:800;font-size:18px;line-height:1.15}
-.inclination-stage{max-width:420px;margin:16px auto 8px;border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(6,16,29,.78)}
-.inclination-frame{aspect-ratio:2/3;width:100%;background:radial-gradient(circle at 50% 0%,rgba(45,98,166,.28),rgba(4,12,24,.9) 58%,rgba(2,7,15,.98) 100%),radial-gradient(circle at 12% 18%,rgba(255,255,255,.55) 0 1.1px,transparent 1.7px),radial-gradient(circle at 78% 11%,rgba(255,255,255,.5) 0 1px,transparent 1.6px),radial-gradient(circle at 64% 52%,rgba(255,255,255,.42) 0 1px,transparent 1.6px),radial-gradient(circle at 35% 71%,rgba(255,255,255,.45) 0 1px,transparent 1.6px),radial-gradient(circle at 48% 37%,rgba(255,255,255,.38) 0 .9px,transparent 1.5px),#040b16;border:1px solid #294769;border-radius:10px;overflow:hidden;position:relative;background-size:cover,72px 72px,86px 86px,98px 98px,112px 112px,130px 130px,auto}
+.inclination-frame{aspect-ratio:2/3;  width: 65%; margin: 0 auto;background:radial-gradient(circle at 50% 0%,rgba(45,98,166,.28),rgba(4,12,24,.9) 58%,rgba(2,7,15,.98) 100%),radial-gradient(circle at 12% 18%,rgba(255,255,255,.55) 0 1.1px,transparent 1.7px),radial-gradient(circle at 78% 11%,rgba(255,255,255,.5) 0 1px,transparent 1.6px),radial-gradient(circle at 64% 52%,rgba(255,255,255,.42) 0 1px,transparent 1.6px),radial-gradient(circle at 35% 71%,rgba(255,255,255,.45) 0 1px,transparent 1.6px),radial-gradient(circle at 48% 37%,rgba(255,255,255,.38) 0 .9px,transparent 1.5px),#040b16;border:1px solid #294769;border-radius:10px;overflow:hidden;position:relative;background-size:cover,72px 72px,86px 86px,98px 98px,112px 112px,130px 130px,auto}
 #inclinationSvg{width:100%;height:100%;display:block}
 .incl-grid{stroke:rgba(220,235,255,.16);stroke-width:1}
 .incl-horizon{stroke:#8fbbe7;stroke-width:2.6;filter:drop-shadow(0 0 6px rgba(135,196,255,.7))}
@@ -538,12 +515,22 @@ $vlSetAz   = 360 - $vlRiseAz;
 .config-vis-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px}
 .config-vis-label{display:flex;align-items:center;gap:8px;font-size:13px;color:#cddbed;font-weight:600;cursor:pointer;user-select:none}
 .config-vis-label input[type=checkbox]{width:15px;height:15px;accent-color:#5ba3f5;cursor:pointer;flex-shrink:0}
+.weather-forecast{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.weather-forecast h3{margin:0 0 10px;color:#9eb1cc;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.forecast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.forecast-item{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03)}
+.forecast-item strong{display:block;margin-bottom:8px;color:#f1f7ff;font-size:13px;font-weight:900;line-height:1.25}
+.forecast-row{margin:0;color:#d9e8f8;font-size:12px;line-height:1.35}
+.forecast-row + .forecast-row{margin-top:4px}
 @media(max-width:900px){.config-grid{grid-template-columns:1fr}.config-map{height:300px}}
 @media(max-width:1400px){.layout{grid-template-columns:360px minmax(0,1fr)!important}.right-column{grid-column:1/-1}.right-column .layers-card{position:static}}
 @media(max-width:1200px){.selected-panel dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1050px){.layout{grid-template-columns:1fr!important}.bottom-grid{grid-template-columns:1fr}}
 @media(max-width:900px){.forecast-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.selected-panel dl{grid-template-columns:1fr}.forecast-grid{grid-template-columns:1fr}}
+.header-icons{display:flex;gap:8px;align-items:center;margin-left:12px}
+.header-icon-btn{background:transparent;border:none;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all 0.15s ease}
+.header-icon-btn:hover{background:rgba(255,255,255,.1)}
 </style>
 </head>
 <body>
@@ -557,6 +544,10 @@ $vlSetAz   = 360 - $vlRiseAz;
       <a class="daybtn" href="?date=<?= htmlspecialchars($prevDate) ?>" title="Día anterior">←</a>
       <a class="daybtn" href="?date=<?= htmlspecialchars($nextDate) ?>" title="Día siguiente">→</a>
       <button type="submit">Actualizar</button>
+      <div class="header-icons">
+        <button type="button" id="headerManualBtn" class="header-icon-btn" title="Manual de usuario">📖</button>
+        <button type="button" id="headerConfigBtn" class="header-icon-btn" title="Configuración">⚙️</button>
+      </div>
     </form>
   </header>
 
@@ -668,14 +659,6 @@ $vlSetAz   = 360 - $vlRiseAz;
               <g id="dynamicDirections360"></g>
             </svg>
           </div>
-          <aside class="selected-panel">
-            <dl>
-              <div><dt>Altura Centro Galáctico</dt><dd data-stat="gcAlt">42.7°</dd></div>
-              <div><dt>Azimut Centro Galáctico</dt><dd data-stat="gcAz">187° (S)</dd></div>
-              <div><dt>Altura máxima Vía Láctea</dt><dd data-stat="mwMaxAlt">—</dd></div>
-              <div><dt>Inclinación Vía Láctea</dt><dd data-stat="mwInclination">—</dd></div>
-            </dl>
-          </aside>
         </div>
 
         <div id="viewPanorama" class="view-pane">
@@ -720,14 +703,6 @@ $vlSetAz   = 360 - $vlRiseAz;
             </select>
           </label>
           <aside class="selected-panel">
-
-            <dl>
-              <div><dt>Altura Centro Galáctico</dt><dd id="gcAlt" data-stat="gcAlt">42.7°</dd></div>
-              <div><dt>Azimut Centro Galáctico</dt><dd id="gcAz" data-stat="gcAz">187° (S)</dd></div>
-              <div><dt>Altura máxima Vía Láctea</dt><dd id="mwMaxAlt" data-stat="mwMaxAlt">—</dd></div>
-              <div><dt>Inclinación Vía Láctea</dt><dd id="mwInclination" data-stat="mwInclination">—</dd></div>
-            </dl>
-          </aside>
         </div>
 
         <div id="viewInclination" class="view-pane">
@@ -767,6 +742,19 @@ $vlSetAz   = 360 - $vlRiseAz;
           </div>
         </div>
 
+        <aside class="selected-panel">
+          <dl>
+            <dt>Altura Centro Galáctico</dt>
+            <dt>Azimut Centro Galáctico</dt>
+            <dt>Altura máxima Vía Láctea</dt>
+            <dt>Inclinación Vía Láctea</dt>
+            <dd data-stat="gcAlt">42.7°</dd>
+            <dd data-stat="gcAz">187° (S)</dd>
+            <dd data-stat="mwMaxAlt">—</dd>
+            <dd data-stat="mwInclination">—</dd>
+          </dl>
+        </aside>
+
         <div class="timeline">
           
           <div class="timeline-labels">
@@ -787,52 +775,44 @@ $vlSetAz   = 360 - $vlRiseAz;
           <div class="hours"><span>20:00</span><span>22:00</span><span>00:00</span><span>02:00</span><span>04:00</span><span>06:00</span><span>08:00</span><span>10:00</span></div>
         </div>
       </section>
+
       <section class="card day-slider-section">
-       
+        <div class="day-slider-label-left">Hoy: <strong><?= $dayThumbDate ?></strong></div>
         <div class="day-slider-wrap">
-                      <div id="dayThumbLabel" class="day-thumb-label"><?= $dayThumbDate ?></div>
-            <div id="dayCurrentLabel" class="day-current-label"><?= $dayThumbDate ?></div>
           <div class="day-slider-container">
             <input id="daySlider" type="range" min="0" max="<?= $dayRangeMax ?>" value="<?= $dayOffset ?>" step="1" class="day-slider">
-
+            <div id="dayThumbLabel" class="day-thumb-label"></div>
           </div>
           <div class="day-label-right">+2 meses</div>
         </div>
       </section>
-      <div class="bottom-grid">
-        <section class="card note conditions-card">
-          <h2>Condiciones actuales (<?= htmlspecialchars($locationName) ?>)</h2>
-          <div class="weather weather-current">
-            <span>🌡️ <?= htmlspecialchars($temperature) ?></span>
-            <span>💧 <?= htmlspecialchars($humidity) ?></span>
-            <span>🌤️ <?= htmlspecialchars($weatherLabel) ?></span>
-            <span>💨 <?= htmlspecialchars($windSpeed) ?></span>
-            <span>☁️ <?= htmlspecialchars($cloudCover) ?></span>
-          </div>
-          <?php if ($weatherForecast !== []): ?>
-            <div class="weather-forecast">
-              <h3>Previsión próximas horas</h3>
-              <div class="forecast-grid">
-                <?php foreach ($weatherForecast as $forecast): ?>
-                  <article class="forecast-item">
-                    <header>
-                      <strong><?= htmlspecialchars($forecast['offsetLabel']) ?></strong>
-                      <span><?= htmlspecialchars($forecast['timeLabel']) ?></span>
-                    </header>
-                    <p>🌡️ <?= htmlspecialchars($forecast['temperature']) ?></p>
-                    <p>💧 <?= htmlspecialchars($forecast['humidity']) ?></p>
-                    <p>🌤️ <?= htmlspecialchars($forecast['weatherLabel']) ?></p>
-                    <p>💨 <?= htmlspecialchars($forecast['windSpeed']) ?></p>
-                    <p>☁️ <?= htmlspecialchars($forecast['cloudCover']) ?></p>
-                  </article>
-                <?php endforeach; ?>
-              </div>
-            </div>
-          <?php endif; ?>
-        </section>
-      </div>
+
     </main>
     <aside class="right-column">
+      <section class="card note conditions-card">
+        <h2>Condiciones actuales (<?= htmlspecialchars($locationName) ?>)</h2>
+        <div class="weather weather-current">
+          <span>🌡️ <?= htmlspecialchars($temperature) ?></span>
+          <span>💧 <?= htmlspecialchars($humidity) ?></span>
+          <span>💨 <?= htmlspecialchars($windSpeed) ?></span>
+          <span>🌤️ <?= htmlspecialchars($weatherLabel) ?></span>
+          <span>☁️ <?= htmlspecialchars($cloudCover) ?></span>
+        </div>
+        <?php if ($weatherForecast !== []): ?>
+          <div class="weather-forecast">
+            <h3>Previsión próximas horas</h3>
+            <div class="forecast-grid">
+              <?php foreach ($weatherForecast as $forecast): ?>
+                <article class="forecast-item">
+                  <strong><?= htmlspecialchars($forecast['offsetLabel']) ?> <?= htmlspecialchars($forecast['timeLabel']) ?></strong>
+                  <p class="forecast-row">🌡️ <?= htmlspecialchars($forecast['temperature']) ?>, 💧 <?= htmlspecialchars($forecast['humidity']) ?>, 💨 <?= htmlspecialchars($forecast['windSpeed']) ?></p>
+                  <p class="forecast-row">🌤️ <?= htmlspecialchars($forecast['weatherLabel']) ?>, ☁️ <?= htmlspecialchars($forecast['cloudCover']) ?></p>
+                </article>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        <?php endif; ?>
+      </section>
       <section class="card note layers-card">
         <h2>Capas de objetos celestes</h2>
         <p>Activa planetas, constelaciones y deep-sky, y busca objetos concretos para resaltarlos en el mapa.</p>
@@ -847,16 +827,6 @@ $vlSetAz   = 360 - $vlRiseAz;
         </label>
         <div id="objectResults" class="object-results"></div>
         <div id="objectDetail" class="object-detail">Selecciona un objeto para centrarlo y ver sus datos.</div>
-      </section>
-      <section class="card note config-card">
-        <h2>Manual de usuario</h2>
-        <p>Consulta una guía paso a paso con las funcionalidades, vistas y configuración del sistema.</p>
-        <a class="config-open-btn" href="manual.html">Abrir manual</a>
-      </section>
-      <section class="card note config-card">
-        <h2>Configuración</h2>
-        <p>Define coordenadas para los cálculos y sube el perfil de horizonte en SVG.</p>
-        <button type="button" id="openConfigModal" class="config-open-btn">Abrir configuración</button>
       </section>
     </aside>
   </div>
