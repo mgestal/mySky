@@ -22,7 +22,9 @@ sunsetMarker360=document.getElementById('sunsetMarker360'),
 moonriseMarker360=document.getElementById('moonriseMarker360'),
 moonsetMarker360=document.getElementById('moonsetMarker360'),
 vlRiseMarker360=document.getElementById('vlRiseMarker360'),
+vlRiseTailMarker360=document.getElementById('vlRiseTailMarker360'),
 vlSetMarker360=document.getElementById('vlSetMarker360'),
+vlSetFrontMarker360=document.getElementById('vlSetFrontMarker360'),
 gcRiseMarker360=document.getElementById('gcRiseMarker360'),
 gcSetMarker360=document.getElementById('gcSetMarker360'),
 moonDot=document.getElementById('moonDot'),
@@ -1049,6 +1051,20 @@ function estimateMilkyWayCrossAz(eventDate, fallbackAz){
   return best ? best.az : fallbackAz;
 }
 
+// Returns the OTHER galactic-plane horizon crossing (the "front" end, opposite to the known setAz)
+function estimateMilkyWayFrontCrossAz(eventDate, knownAz){
+  // Exclude candidates within 60° of the known crossing to find the opposite intersection
+  let best=null;
+  for(let l=0;l<=360;l+=1){
+    const eq=galToEq(l%360,0);
+    const aa=eqToAltAz(eq.ra,eq.dec,eventDate);
+    if(Math.abs(signedAzDiff(aa.az,knownAz))<60) continue; // skip same crossing region
+    const candidate={az:aa.az, score:Math.abs(aa.alt)};
+    if(!best || candidate.score<best.score) best=candidate;
+  }
+  return best ? best.az : norm360(knownAz+180);
+}
+
 function buildGalacticPlane(dateObj){
   const panoramaVisible=[];
   const allVisible=[];
@@ -1370,9 +1386,14 @@ function updateSky(){
       const fallbackRiseAz=Number.isFinite(Number(astro.vlRiseAz)) ? Number(astro.vlRiseAz) : 124;
       const vlRiseAz=estimateMilkyWayRiseAz(vlRiseDate,fallbackRiseAz);
       placeEventMarker360(vlRiseMarker360,vlRiseAz,astro.vlRise);
+      if(vlRiseTailMarker360){
+        const tailRiseAz=estimateMilkyWayFrontCrossAz(vlRiseDate,vlRiseAz);
+        placeEventMarker360(vlRiseTailMarker360,tailRiseAz,astro.vlRise);
+      }
     }
   }else{
     setMarkerVisibility(vlRiseMarker360,false);
+    setMarkerVisibility(vlRiseTailMarker360,false);
   }
   const vlSetDate=dateForTimeLabel(astro.vlSet,false);
   if(visState.vlMarkers){
@@ -1380,9 +1401,15 @@ function updateSky(){
       const fallbackSetAz=Number.isFinite(Number(astro.vlSetAz)) ? Number(astro.vlSetAz) : 185;
       const vlSetAz=estimateMilkyWayCrossAz(vlSetDate,fallbackSetAz);
       placeEventMarker360(vlSetMarker360,vlSetAz,astro.vlSet);
+      // Front (leading) edge of VL at set time
+      if(vlSetFrontMarker360){
+        const frontAz=estimateMilkyWayFrontCrossAz(vlSetDate,vlSetAz);
+        placeEventMarker360(vlSetFrontMarker360,frontAz,astro.vlSet);
+      }
     }
   }else{
     setMarkerVisibility(vlSetMarker360,false);
+    setMarkerVisibility(vlSetFrontMarker360,false);
   }
   const gcRiseDate=dateForTimeLabel(astro.gcRise,false);
   if(visState.gcMarkers){

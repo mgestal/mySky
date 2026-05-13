@@ -473,7 +473,9 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
                 <g id="moonriseMarker360" class="mark" style="--c:#32d4ff"><circle cx="320" cy="320" r="7"/><text x="332" y="316">Salida Luna</text></g>
                 <g id="moonsetMarker360" class="mark" style="--c:#32d4ff"><circle cx="320" cy="320" r="7"/><text x="332" y="316">Puesta Luna</text></g>
                 <?= marker360($vlRiseAz, 'Salida VL', $vlRise, '#56f06a', 238, 'vlRiseMarker360') ?>
-                <?= marker360($vlSetAz, 'Ocultación VL', $vlSet, '#ff4f45', 238, 'vlSetMarker360') ?>
+                <?= marker360($vlRiseAz, 'Salida cola VL', $vlRise, '#56f06a', 238, 'vlRiseTailMarker360') ?>
+                <?= marker360($vlSetAz, 'Ocultación cola VL', $vlSet, '#ff4f45', 238, 'vlSetMarker360') ?>
+                <?= marker360($vlSetAz, 'Ocultación VL', $vlSet, '#ff4f45', 238, 'vlSetFrontMarker360') ?>
                 <?= marker360($gcRiseAz, 'Salida CG', $gcRise, '#b678ff', 238, 'gcRiseMarker360') ?>
                 <?= marker360($gcSetAz, 'Puesta CG', $gcSet, '#4bd7ff', 238, 'gcSetMarker360') ?>
               </g>
