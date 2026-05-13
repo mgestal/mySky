@@ -576,14 +576,14 @@ $vlSetAz   = 360 - $vlRiseAz;
         <p>La vista panorámica está orientada mirando hacia el Sur: izquierda = E/SE, centro = S, derecha = SO/O.</p>
         <p>La altura máxima de la Vía Láctea se calcula muestreando el plano galáctico visible; la inclinación es la pendiente aparente del arco en la panorámica Sur.</p>
       </section>
-      <section class="card legend-card">
+      <!-- <section class="card legend-card">
         <h2>Leyenda</h2>
         <span class="green"><i></i>Salida de la Vía Láctea</span>
         <span class="red"><i></i>Ocultación de la Vía Láctea</span>
         <span class="violet"><i></i>Centro Galáctico</span>
         <span class="orange"><i></i>Sol: salida, puesta y trayectoria</span>
         <span class="cyan"><i></i>Luna: salida y puesta</span>
-      </section>
+      </section> -->
     </aside>
 
     <main class="main">

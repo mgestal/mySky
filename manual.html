@@ -48,8 +48,8 @@ h1{margin:0;font-size:34px;line-height:1.1}
         <div class="toc">
           <a href="#inicio">Inicio rapido</a>
           <a href="#vistas">Vistas del cielo</a>
-          <a href="#timeline">Timeline y eventos</a>
-          <a href="#capas">Capas y busqueda</a>
+          <a href="#timeline">Timeline y selector de dia</a>
+          <a href="#capas">Meteorologia y capas</a>
           <a href="#config">Configuracion</a>
           <a href="#capturas">Capturas y recursos</a>
         </div>
@@ -58,11 +58,13 @@ h1{margin:0;font-size:34px;line-height:1.1}
       <section class="card" id="inicio">
         <h2>1. Inicio rapido</h2>
         <div class="steps">
-          <div class="step"><p>Selecciona la <strong>fecha</strong> en la parte superior y pulsa Actualizar.</p></div>
-          <div class="step"><p>Ajusta la <strong>hora</strong> con el slider de timeline o usa animacion automatica.</p></div>
-          <div class="step"><p>Alterna entre <strong>Vista 360</strong>, <strong>Panoramica</strong> e <strong>Inclinacion</strong>.</p></div>
-          <div class="step"><p>Activa capas y busca objetos para centrar la sesion en tu objetivo.</p></div>
-          <div class="step"><p>Si cambias de ubicacion, abre Configuracion y guarda nombre, coordenadas, perfil SVG y, si te interesa reutilizarla, como localizacion favorita.</p></div>
+          <div class="step"><p>Selecciona la <strong>fecha</strong> en la cabecera (input, botones ← → o icono 📅) y pulsa <strong>Actualizar</strong>.</p></div>
+          <div class="step"><p>Ajusta la <strong>hora</strong> con el slider del timeline o activa la reproduccion automatica y cambia la velocidad.</p></div>
+          <div class="step"><p>Usa el <strong>selector de dia</strong> (debajo del timeline) para saltar entre fechas dentro del rango de +2 meses. El dia seleccionado aparece flotando sobre el slider.</p></div>
+          <div class="step"><p>Alterna entre <strong>Vista 360</strong>, <strong>Panoramica</strong> e <strong>Inclinacion</strong> con los botones superiores de la card de simulacion.</p></div>
+          <div class="step"><p>Consulta el <strong>panel de datos</strong> (debajo de las vistas) para ver en tiempo real la altura y azimut del Centro Galactico y la Via Lactea.</p></div>
+          <div class="step"><p>Activa capas y busca objetos celestes en la columna derecha para centrar la sesion en tu objetivo.</p></div>
+          <div class="step"><p>Abre la <strong>Configuracion</strong> (icono ⚙️ en la cabecera) para fijar ubicacion, guardar favoritas y cargar perfil SVG de horizonte.</p></div>
         </div>
       </section>
 
@@ -70,47 +72,64 @@ h1{margin:0;font-size:34px;line-height:1.1}
         <h2>2. Resumen de interfaz</h2>
         <p>La pantalla principal se divide en tres areas:</p>
         <ul>
-          <li>Columna izquierda: resumen de tiempos astronomicos y meteorologia.</li>
-          <li>Zona central: visor del cielo (360, panoramica e inclinacion), timeline y control horario.</li>
-          <li>Columna derecha: capas de objetos, buscador y configuracion de ubicacion/horizonte.</li>
+          <li><strong>Cabecera superior</strong>: nombre de ubicacion, selector de fecha, botones de dia anterior/siguiente, boton Actualizar, icono de Manual (📖) e icono de Configuracion (⚙️).</li>
+          <li><strong>Columna izquierda</strong>: resumen de tiempos astronomicos (salida/puesta Sol, Luna, Via Lactea, Centro Galactico), informacion de calculos y leyenda de colores.</li>
+          <li><strong>Zona central</strong>: visor del cielo (Vista 360, Panoramica e Inclinacion), panel de datos astronomicos, timeline horario y selector de dia.</li>
+          <li><strong>Columna derecha</strong>: condiciones meteorologicas actuales y prevision compacta, capas de objetos celestes y buscador.</li>
         </ul>
       </section>
 
       <section class="card" id="vistas">
         <h2>3. Vistas del cielo</h2>
         <ul>
-          <li>Vista 360: cielo circular para orientacion global y eventos por azimut.</li>
-          <li>Panoramica: vista horizontal arrastrable para trabajar encuadres de foto.</li>
-          <li>Inclinacion: estimacion vertical de la via lactea con referencia del centro galactico.</li>
+          <li><strong>Vista 360</strong>: cielo circular completo para orientacion global. Muestra posicion del Sol, Luna, Via Lactea, Centro Galactico y objetos celestes por azimut. Arrastrable para rotar. Soporta capa de satelite (toggle + zoom + Ctrl+drag).</li>
+          <li><strong>Panoramica</strong>: vista horizontal arrastrable, orientada mirando al Sur (izquierda = E/SE, centro = S, derecha = SO/O). Util para planificar encuadres fotograficos. Incluye selector de focal simulada (n/a, 16mm, 35mm, 50mm).</li>
+          <li><strong>Inclinacion</strong>: estimacion vertical de la Via Lactea con referencia del Centro Galactico. Muestra la inclinacion aparente del arco en encuadre 3:2. Incluye selector de focal simulada.</li>
         </ul>
-        <p>Usa el selector de hora y la reproduccion automatica para recorrer la noche.</p>
+        <p>Debajo de las tres vistas hay un <strong>panel de datos</strong> compartido con Altura y Azimut del Centro Galactico, altura maxima de la Via Lactea e inclinacion, actualizados segun la hora seleccionada.</p>
       </section>
 
       <section class="card" id="timeline">
-        <h2>4. Timeline y eventos</h2>
-        <p>La barra temporal representa del ocaso al amanecer e incluye hitos: fin de crepusculo, salida/ocultacion de via lactea, salida/puesta del centro galactico y amanecer.</p>
-        <p>Los marcadores de la grafica se recalculan segun la fecha seleccionada.</p>
+        <h2>4. Timeline y selector de dia</h2>
+        <p>La barra temporal representa la noche de ocaso a amanecer e incluye hitos codificados por color:</p>
+        <ul>
+          <li><span style="color:#ffae20">■</span> Ocaso / Amanecer</li>
+          <li><span style="color:#a0a8b0">■</span> Crepusculo astronomico (noche oscura)</li>
+          <li><span style="color:#49ee61">■</span> Salida de la Via Lactea</li>
+          <li><span style="color:#bd6bff">■</span> Ventana del Centro Galactico</li>
+          <li><span style="color:#ff4f45">■</span> Ocultacion de la Via Lactea</li>
+        </ul>
+        <p>Haz clic en cualquier etiqueta del timeline para saltar directamente a ese momento.</p>
+        <p>El <strong>selector de dia</strong> (debajo del timeline) permite moverse entre fechas sin recargar: muestra el dia actual a la izquierda y +2 meses a la derecha. Al arrastrar el thumb aparece flotando la fecha seleccionada; al soltar, se navega a esa fecha.</p>
       </section>
 
       <section class="card" id="capas">
-        <h2>5. Capas de objetos celestes</h2>
+        <h2>5. Meteorologia y capas de objetos</h2>
+        <p><strong>Condiciones actuales</strong> (columna derecha, encima de Capas): muestra temperatura, humedad, viento, estado del cielo y cobertura de nubes en tiempo real para la ubicacion configurada. Debajo aparecen subcards de prevision para <strong>+6h, +12h, +24h y +72h</strong>, cada una con:</p>
+        <ul>
+          <li>Fila 1 (negrita): etiqueta de offset, fecha y hora (ej. +6h 14/05 04:00).</li>
+          <li>Fila 2: temperatura 🌡️, humedad 💧, viento 💨.</li>
+          <li>Fila 3: estado del cielo 🌤️ y cobertura de nubes ☁️.</li>
+        </ul>
+        <p><strong>Capas de objetos celestes</strong>:</p>
         <ul>
           <li>Planetas, constelaciones y deep-sky pueden activarse por separado.</li>
-          <li>El buscador filtra objetos por nombre o categoria.</li>
-          <li>Al seleccionar un objeto, se resalta y muestra su informacion de altitud/azimut.</li>
+          <li>El buscador filtra objetos por nombre o categoria (ej. M31, Venus, Orion).</li>
+          <li>Al seleccionar un objeto, se resalta en el mapa y muestra su informacion de altitud/azimut.</li>
         </ul>
       </section>
 
       <section class="card" id="config">
         <h2>6. Configuracion de ubicacion</h2>
+        <p>Accede desde el icono <strong>⚙️</strong> de la cabecera. El modal incluye:</p>
         <ul>
-          <li>Nombre de ubicacion: etiqueta mostrada en cabecera y paneles informativos.</li>
-          <li>Favoritas: puedes guardar la ubicacion actual como favorita y recuperarla desde un desplegable.</li>
-          <li>Mapa: haz clic para fijar coordenadas GPS.</li>
-          <li>Buscador de direccion: centra el mapa en una direccion concreta y rellena lat/lon.</li>
-          <li>Perfil SVG: permite cargar un horizonte personalizado.</li>
+          <li><strong>Nombre de ubicacion</strong>: etiqueta mostrada en cabecera y paneles.</li>
+          <li><strong>Favoritas</strong>: guarda la ubicacion actual (con perfil SVG si lo has cargado) y recuperala desde el desplegable en futuras sesiones.</li>
+          <li><strong>Mapa interactivo</strong>: haz clic para fijar coordenadas GPS, o usa el buscador de direccion para geocodificar automaticamente.</li>
+          <li><strong>Perfil SVG</strong>: carga un horizonte personalizado exportado desde PeakFinder u otra herramienta compatible.</li>
+          <li><strong>Visibilidad de capas graficas</strong>: activa o desactiva marcadores de Sol, Luna, Via Lactea, Centro Galactico, arco solar y controles de animacion.</li>
         </ul>
-        <p>Al guardar, tanto la configuracion actual como las localizaciones favoritas quedan persistidas en <strong>config.json</strong>.</p>
+        <p>Al guardar, la configuracion queda persistida en <strong>config.json</strong> en el servidor.</p>
       </section>
 
       <section class="card" id="capturas">
