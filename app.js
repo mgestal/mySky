@@ -44,6 +44,7 @@ viewInclination=document.getElementById('viewInclination'),
 nowMarker360=document.getElementById('nowMarker360'),
 skyPanel=document.getElementById('skyPanel'),
 skyPhoto=document.getElementById('skyPhoto'),
+skyStars=document.getElementById('skyStars'),
 panoramaHeading=document.getElementById('panoramaHeading'),
 panLeftLabel=document.getElementById('panLeftLabel'),
 panCenterLabel=document.getElementById('panCenterLabel'),
@@ -409,7 +410,7 @@ function renderHorizonProfile360(){
   let profilePath='';
   const terrain=[];
   const outer=[];
-  for(let i=0;i<horizonAltitudes.length;i++){
+    for(let i=0; i<horizonAltitudes.length; i++){
     const alt=horizonAltitudes[i];
     if(alt===null) continue;
     const az=(i/(horizonAltitudes.length-1))*360;
@@ -451,7 +452,7 @@ function renderHorizonProfilePanorama(){
   };
 
   const points=[];
-  for(let x=0;x<=1000;x+=2){
+    for(let x=0; x<=1000; x+=2){
     const d=((x-500)/500)*(profile.hFov/2);
     const az=norm360(panCenterAz+d);
     const alt=getHorizonAlt(az);
@@ -940,7 +941,7 @@ function timeLabelToSliderValue(hhmm){
 
 const SKY_NIGHT_BG="radial-gradient(circle at center, rgba(2,7,15,.02), rgba(2,7,15,.30) 70%, rgba(0,0,0,.72) 100%), url('cielo360.png')";
 const SKY_DAY_BG="radial-gradient(120% 100% at 50% 100%, rgba(255,255,255,.20) 0%, rgba(171,211,243,.14) 38%, rgba(112,174,220,.10) 62%, rgba(72,146,199,.18) 100%), radial-gradient(14% 9% at 18% 28%, rgba(255,255,255,.72) 0%, rgba(255,255,255,.20) 58%, rgba(255,255,255,0) 100%), radial-gradient(16% 10% at 44% 32%, rgba(255,255,255,.70) 0%, rgba(255,255,255,.18) 60%, rgba(255,255,255,0) 100%), radial-gradient(15% 9% at 70% 24%, rgba(255,255,255,.66) 0%, rgba(255,255,255,.16) 58%, rgba(255,255,255,0) 100%), radial-gradient(13% 8% at 82% 40%, rgba(255,255,255,.60) 0%, rgba(255,255,255,.14) 62%, rgba(255,255,255,0) 100%), linear-gradient(180deg, #69a9d8 0%, #74b7e3 48%, #9cd0ef 100%)";
-const SKY_PANORAMA_NIGHT_BG="radial-gradient(140% 120% at 50% 100%, rgba(12,22,41,.22) 0%, rgba(5,11,24,.62) 46%, rgba(2,7,15,.95) 100%), radial-gradient(circle at 14% 24%, rgba(255,255,255,.90) 0 1px, rgba(255,255,255,0) 1.9px), radial-gradient(circle at 28% 15%, rgba(255,255,255,.78) 0 .9px, rgba(255,255,255,0) 1.7px), radial-gradient(circle at 43% 34%, rgba(255,255,255,.82) 0 1.1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 61% 21%, rgba(255,255,255,.84) 0 1px, rgba(255,255,255,0) 1.8px), radial-gradient(circle at 77% 29%, rgba(255,255,255,.76) 0 .9px, rgba(255,255,255,0) 1.7px), radial-gradient(circle at 88% 17%, rgba(255,255,255,.80) 0 1px, rgba(255,255,255,0) 1.8px), linear-gradient(180deg, #081427 0%, #050c19 56%, #03070f 100%)";
+const SKY_PANORAMA_NIGHT_BG=SKY_NIGHT_BG;
 
 function updateSky360Background(val,sunAlt){
   const skyBg360=document.getElementById('skyBg360');
@@ -965,7 +966,22 @@ function updateSky360Background(val,sunAlt){
     skyBg360.style.setProperty('background-image',isNight ? SKY_NIGHT_BG : SKY_DAY_BG,'important');
   }
   if(skyPhoto){
-    skyPhoto.style.setProperty('background-image',isNight ? SKY_PANORAMA_NIGHT_BG : SKY_DAY_BG,'important');
+    if(isNight){
+      skyPhoto.dataset.isNight='1';
+      skyPhoto.style.setProperty('background-image',SKY_PANORAMA_NIGHT_BG,'important');
+      skyPhoto.style.setProperty('background-repeat','no-repeat','important');
+      skyPhoto.style.setProperty('background-size','cover, 200% auto','important');
+      skyPhoto.style.setProperty('background-position','center center, 50% center','important');
+    }else{
+      skyPhoto.dataset.isNight='0';
+      skyPhoto.style.setProperty('background-image',SKY_DAY_BG,'important');
+      skyPhoto.style.setProperty('background-repeat','no-repeat','important');
+      skyPhoto.style.setProperty('background-size','cover','important');
+      skyPhoto.style.setProperty('background-position','50% center','important');
+    }
+  }
+  if(skyStars){
+    skyStars.classList.remove('active');
   }
 }
 
@@ -1448,7 +1464,15 @@ function updatePanoramaLabels(){
     }).join('');
   }
   if(panoramaHeading) panoramaHeading.textContent=`${Math.round(center)}° (${directionName(center)})`;
-  if(skyPhoto) skyPhoto.style.backgroundPosition=`${(center/360)*100}% center`;
+  if(skyPhoto){
+    const pct=`${(center/360)*100}% center`;
+    if(skyPhoto.dataset.isNight==='1'){
+      const nightPct=20+((center/360)*60);
+      skyPhoto.style.backgroundPosition=`center center, ${nightPct.toFixed(2)}% center`;
+    }else{
+      skyPhoto.style.backgroundPosition=pct;
+    }
+  }
 }
 
 function updateSky(){
