@@ -8,6 +8,7 @@ $defaultConfig = [
   'lat' => 43.37,
   'lon' => -8.41,
   'horizonSvg' => 'default.svg',
+  'focalPreset' => 'na',
   'favorites' => [],
 ];
 $loadedConfig = $defaultConfig;
@@ -27,6 +28,10 @@ if ($locationName === '') $locationName = 'A Coruña';
 $horizonSvg = is_string($loadedConfig['horizonSvg'] ?? null) ? $loadedConfig['horizonSvg'] : $defaultConfig['horizonSvg'];
 if ($horizonSvg === '') {
   $horizonSvg = $defaultConfig['horizonSvg'];
+}
+$focalPreset = is_string($loadedConfig['focalPreset'] ?? null) ? $loadedConfig['focalPreset'] : $defaultConfig['focalPreset'];
+if (!in_array($focalPreset, ['na', '16mm', '35mm', '50mm'], true)) {
+  $focalPreset = $defaultConfig['focalPreset'];
 }
 $favorites = [];
 if (isset($loadedConfig['favorites']) && is_array($loadedConfig['favorites'])) {
@@ -101,26 +106,81 @@ function moonPhaseIllumination(string $date): int {
     if ($phase < 0) $phase += $synodic;
     return (int)round(((1 - cos(2 * M_PI * $phase / $synodic)) / 2) * 100);
 }
-function moonApproxTimes(string $date): array {
-    $base = strtotime('2026-05-16 12:00:00 UTC');
-    $now = strtotime($date . ' 12:00:00 UTC');
-    $days = (int)round(($now - $base) / 86400);
-    return [addMinutes('06:19', $days * 50), addMinutes('22:03', $days * 50)];
+// --- Astronomical calculations ---
+
+function julianDay(string $date): float {
+    [$y, $m, $d] = array_map('intval', explode('-', $date));
+    if ($m <= 2) { $y--; $m += 12; }
+    $A = intdiv($y, 100);
+    $B = 2 - $A + intdiv($A, 4);
+    return (float)((int)(365.25 * ($y + 4716)) + (int)(30.6001 * ($m + 1)) + $d + $B) - 1524.5;
 }
-function siderealShift(string $date): int {
-    $base = strtotime('2026-05-16 12:00:00 UTC');
-    $now = strtotime($date . ' 12:00:00 UTC');
-    $days = (int)round(($now - $base) / 86400);
-    return (int)round($days * 3.94);
+function gmst0h(float $jd): float {
+    $T = ($jd - 2451545.0) / 36525.0;
+    $g = 6.697374558 + 2400.0513369 * $T + 0.0000258622 * $T * $T;
+    $g = fmod($g, 24.0);
+    return $g < 0.0 ? $g + 24.0 : $g;
 }
-function astroApproxTimes(string $date): array {
-    $shift = siderealShift($date);
+function riseSetUT(float $ra_deg, float $dec_deg, float $lat_deg, float $lon_deg, string $date): array {
+    $jd    = julianDay($date);
+    $lmst0 = fmod(gmst0h($jd) + $lon_deg / 15.0, 24.0);
+    if ($lmst0 < 0.0) $lmst0 += 24.0;
+    $ra_h  = $ra_deg / 15.0;
+    $cosH0 = -tan(deg2rad($lat_deg)) * tan(deg2rad($dec_deg));
+    $n24   = static function (float $h): float {
+        $h = fmod($h, 24.0);
+        return $h < 0.0 ? $h + 24.0 : $h;
+    };
+    $transit = $n24(($ra_h - $lmst0) / 1.00273791);
+    if (abs($cosH0) > 1.0) return ['rise' => null, 'transit' => $transit, 'set' => null];
+    $H0_h = rad2deg(acos($cosH0)) / 15.0;
     return [
-        addMinutes('00:01', -$shift),
-        addMinutes('00:46', -$shift),
-        addMinutes('03:16', -$shift) . ' – ' . addMinutes('04:16', -$shift),
-        addMinutes('08:32', -$shift)
+        'rise'    => $n24(($ra_h - $H0_h - $lmst0) / 1.00273791),
+        'transit' => $transit,
+        'set'     => $n24(($ra_h + $H0_h - $lmst0) / 1.00273791),
     ];
+}
+function utToLocal(float $ut_h, string $date): string {
+    $ts = strtotime($date . ' 00:00:00 UTC') + (int)round($ut_h * 3600.0);
+    return (new DateTimeImmutable('@' . $ts))->setTimezone(new DateTimeZone('Europe/Madrid'))->format('H:i');
+}
+function localToUT(string $hhmm, string $date): ?float {
+    if ($hhmm === '—') return null;
+    $dt = DateTimeImmutable::createFromFormat('Y-m-d H:i', $date . ' ' . $hhmm, new DateTimeZone('Europe/Madrid'));
+    if ($dt === false) return null;
+    return ($dt->getTimestamp() - strtotime($date . ' 00:00:00 UTC')) / 3600.0;
+}
+function moonPosition(string $date): array {
+    $jd = julianDay($date);
+    $T  = ($jd - 2451545.0) / 36525.0;
+    $L0 = fmod(218.316 + 481267.881 * $T, 360.0);
+    $M  = fmod(134.963 + 477198.867 * $T, 360.0);
+    $F  = fmod(93.272  + 483202.017 * $T, 360.0);
+    $D  = fmod(297.850 + 445267.111 * $T, 360.0);
+    $Mr = deg2rad($M); $Fr = deg2rad($F); $Dr = deg2rad($D);
+    $dL = (6893.0*sin($Mr) + 72.0*sin(2.0*$Mr) + 2784.0*sin(2.0*$Dr - $Mr)
+           + 2752.0*sin(2.0*$Dr) - 976.0*sin(2.0*$Dr - 2.0*$Mr)) / 3600.0;
+    $dB = (5128.0*sin($Fr) + 280.0*sin($Mr + $Fr) + 277.0*sin($Mr - $Fr)) / 3600.0;
+    $lambda = fmod($L0 + $dL + 360.0, 360.0);
+    $eps    = 23.4393 - 0.0130042 * $T;
+    $lr = deg2rad($lambda); $br = deg2rad($dB); $er = deg2rad($eps);
+    $ra  = fmod(rad2deg(atan2(cos($er)*sin($lr) - tan($br)*sin($er), cos($lr))) + 360.0, 360.0);
+    $dec = rad2deg(asin(sin($br)*cos($er) + cos($br)*sin($er)*sin($lr)));
+    return ['ra' => $ra, 'dec' => $dec];
+}
+function sunDeclination(string $date): float {
+    $jd  = julianDay($date);
+    $n   = $jd - 2451545.0;
+    $L   = fmod(280.460 + 0.9856474 * $n, 360.0);
+    $g   = deg2rad(fmod(357.528 + 0.9856003 * $n, 360.0));
+    $lam = deg2rad($L + 1.915 * sin($g) + 0.020 * sin(2.0 * $g));
+    $eps = deg2rad(23.439 - 0.0000004 * $n);
+    return rad2deg(asin(sin($eps) * sin($lam)));
+}
+function riseAzimuth(float $dec_deg, float $lat_deg): float {
+    $c = sin(deg2rad($dec_deg)) / cos(deg2rad($lat_deg));
+    $c = max(-1.0, min(1.0, $c));
+    return round(rad2deg(acos($c)));
 }
 function marker360(float $az, string $label, string $time, string $color, int $r=238, string $id=''): string {
     $cx = 320; $cy = 320;
@@ -220,9 +280,58 @@ $sunrise = hm($sunInfo['sunrise'] ?? null);
 $sunset = hm($sunInfo['sunset'] ?? null);
 $astroEnd = hm($sunInfo['astronomical_twilight_end'] ?? null);
 $astroBegin = hm($sunInfo['astronomical_twilight_begin'] ?? null);
-[$moonRise, $moonSet] = moonApproxTimes($date);
+// Moon
+$moonPos   = moonPosition($date);
+$moonTimes = riseSetUT($moonPos['ra'], $moonPos['dec'], $lat, $lon, $date);
+$moonRise  = ($moonTimes['rise'] !== null) ? utToLocal($moonTimes['rise'], $date) : '—';
+$moonSet   = ($moonTimes['set']  !== null) ? utToLocal($moonTimes['set'],  $date) : '—';
 $moonIllumination = moonPhaseIllumination($date);
-[$vlRise, $gcRise, $gcBest, $gcSet] = astroApproxTimes($date);
+
+// Dark window boundaries in UT hours
+$astroEnd_ut   = localToUT($astroEnd,   $date);
+$astroBegin_ut = localToUT($astroBegin, $date);
+
+// Galactic Center: RA 17h45m40s = 266.405°, Dec -29°00' = -29.007°
+$gcTimes    = riseSetUT(266.405, -29.007, $lat, $lon, $date);
+$gcRise_ut  = $gcTimes['rise'];
+$gcTrans_ut = $gcTimes['transit'];
+$gcSet_ut   = $gcTimes['set'];
+$gcRise = ($gcRise_ut !== null) ? utToLocal($gcRise_ut, $date) : '—';
+
+// GC set is capped to astronomical twilight begin (sky brightens before geometric set)
+if ($gcSet_ut !== null && $astroBegin_ut !== null) {
+    $gcSet = utToLocal(min($gcSet_ut, $astroBegin_ut), $date);
+} else {
+    $gcSet = ($gcSet_ut !== null) ? utToLocal($gcSet_ut, $date) : ($astroBegin ?? '—');
+}
+
+// Best window: transit ± 1h, capped to dark window
+// Use "night frame" (morning hours < 12 are shifted +24 for correct comparison)
+$nf = static function (float $h): float { return $h < 12.0 ? $h + 24.0 : $h; };
+if ($gcTrans_ut !== null) {
+    $tn = $nf($gcTrans_ut);
+    $bs = $tn - 1.0;
+    $be = $tn + 1.0;
+    if ($gcRise_ut    !== null) $bs = max($bs, $nf($gcRise_ut));
+    if ($astroEnd_ut  !== null) $bs = max($bs, $nf($astroEnd_ut));
+    if ($astroBegin_ut !== null) $be = min($be, $nf($astroBegin_ut));
+    $gcBest = utToLocal($bs > 24.0 ? $bs - 24.0 : $bs, $date)
+            . ' – '
+            . utToLocal($be > 24.0 ? $be - 24.0 : $be, $date);
+} else {
+    $gcBest = '—';
+}
+
+// Milky Way: representative point at Sgr/Sco boundary (rises ~20 min before GC)
+$vlTimes   = riseSetUT(260.0, -29.0, $lat, $lon, $date);
+$vlRise_ut = $vlTimes['rise'];
+// VL rise = max(geometric rise, end of astronomical twilight)
+if ($vlRise_ut !== null && $astroEnd_ut !== null) {
+    $vr_nf  = max($nf($vlRise_ut), $nf($astroEnd_ut));
+    $vlRise = utToLocal($vr_nf > 24.0 ? $vr_nf - 24.0 : $vr_nf, $date);
+} else {
+    $vlRise = ($vlRise_ut !== null) ? utToLocal($vlRise_ut, $date) : '—';
+}
 $vlSet = $astroBegin;
 
 $weatherCurrent = fetchCurrentWeather($lat, $lon);
@@ -232,7 +341,12 @@ $windSpeed = isset($weatherCurrent['wind_speed_10m']) ? (int)round((float)$weath
 $cloudCover = isset($weatherCurrent['cloud_cover']) ? (int)round((float)$weatherCurrent['cloud_cover']) . '%' : '—';
 $weatherLabel = weatherCodeLabel(isset($weatherCurrent['weather_code']) ? (int)$weatherCurrent['weather_code'] : null);
 
-$sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 229;
+$sunDecl   = sunDeclination($date);
+$sunsetAz  = 360 - (int)riseAzimuth($sunDecl, $lat);
+$gcRiseAz  = (int)riseAzimuth(-29.007, $lat);
+$gcSetAz   = 360 - $gcRiseAz;
+$vlRiseAz  = (int)riseAzimuth(-29.0, $lat);
+$vlSetAz   = 360 - $vlRiseAz;
 ?>
 <!doctype html>
 <html lang="es">
@@ -273,12 +387,12 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
 .constellation-m{color:var(--cyan)}
 .deepsky-m{color:#ff9cc8}
 .horizon-fill{fill:#000;opacity:1}
-.horizon-profile-360,.horizon-profile-panorama{fill:none;stroke:#040404;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.95;filter:none}
+.horizon-profile-360,.horizon-profile-panorama{fill:none;stroke:#040404;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.995;filter:none}
 .panorama-ground-mask{fill:#000;opacity:1}
-.panorama-ground-cover{position:absolute;left:0;right:0;bottom:0;height:32%;background:#000;z-index:1}
-.sky-photo{z-index:0;clip-path:inset(0 0 28% 0)}
+.panorama-ground-cover{position:absolute;left:0;right:0;bottom:0;height:4%;background:#000}
+.sky-photo{z-index:0;clip-path:inset(0 0 3% 0)}
 .sky-overlay{z-index:2}
-.sky-panel svg{max-height:380px}
+.sky-panel svg{max-height:none}
 .day-slider-section{margin-top:16px}.day-slider-wrap{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 16px}.day-label-left,.day-label-right{color:#9eb1cc;font-size:12px;font-weight:600;white-space:nowrap}.day-slider-container{position:relative;display:flex;align-items:center}.day-slider{width:100%;height:6px;border:none;border-radius:3px;background:linear-gradient(to right,#2a4a5f 0%,#1a3a4f 100%);-webkit-appearance:none;appearance:none;cursor:pointer;outline:none}.day-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#49ee61;cursor:grab;box-shadow:0 0 8px rgba(73,238,97,0.4);border:2px solid #06101d;transition:all 0.15s ease}.day-slider::-webkit-slider-thumb:active{cursor:grabbing;box-shadow:0 0 12px rgba(73,238,97,0.6)}.day-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#49ee61;cursor:grab;box-shadow:0 0 8px rgba(73,238,97,0.4);border:2px solid #06101d;transition:all 0.15s ease}.day-slider::-moz-range-thumb:active{cursor:grabbing;box-shadow:0 0 12px rgba(73,238,97,0.6)}.day-thumb-label{position:absolute;top:-24px;left:50%;transform:translateX(-50%);background:#06101d;color:#49ee61;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap;pointer-events:none;border:1px solid #49ee61;opacity:0;transition:opacity 0.15s ease}.day-slider:hover~.day-thumb-label,.day-slider:active~.day-thumb-label{opacity:1}.day-current-label{color:#9eb1cc;font-size:12px;font-weight:600;min-width:50px;text-align:center}
 .selected-panel{position:relative!important;top:auto!important;right:auto!important;width:auto!important;margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 16px 12px;background:rgba(255,255,255,.02);backdrop-filter:none;text-align:left}
 .selected-panel h3{margin:0 0 6px;color:var(--blue);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
@@ -414,8 +528,8 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
       <section class="card hero">
         <div class="hero-head">
           <div>
-            <h2>Animación del cielo por horas</h2>
-            <p>Vistas 360 y panorámica son arrastables. Inclinación basada en encuadre 3:2 vertical.</p>
+            <h2>Simulación</h2>
+            <p>Vistas 360 y panorámica arrastables. Inclinación CG basada encuadre 3:2.</p>
           </div>
           <div class="controls">
             <div class="controls-row">
@@ -495,10 +609,12 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
 
         <div id="viewPanorama" class="view-pane">
           <div class="sky-panel" id="skyPanel">
-            <div class="panorama-help">Arrastra horizontalmente para cambiar la orientación · <strong id="panoramaHeading">180° (S)</strong></div>
+            <div class="panorama-toolbar">
+              <div class="panorama-help">Arrastrar cambia orientación · <strong id="panoramaHeading">180° (S)</strong></div>
+            </div>
             <div class="sky-photo" id="skyPhoto"></div>
             <div class="panorama-ground-cover" aria-hidden="true"></div>
-            <svg viewBox="0 0 1000 520" class="sky-overlay" aria-label="Panorámica orientable 360 grados">
+            <svg viewBox="0 0 1000 520" preserveAspectRatio="xMidYMin slice" class="sky-overlay" aria-label="Panorámica orientable 360 grados">
               <path class="dome" d="M40,430 C150,60 850,60 960,430" />
               <line class="axis" x1="500" y1="80" x2="500" y2="470" />
               <line class="axis" x1="40" y1="430" x2="960" y2="430" />
@@ -522,6 +638,15 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
               <g id="gcMarker" class="svg-marker violet-m"><path d="M515 305 l0 28 M501 319 l28 0"/><circle cx="515" cy="319" r="11"/><text x="470" y="285">Centro Galáctico</text></g>
             </svg>
           </div>
+          <label class="focal-control focal-control-panorama">
+            Focal simulada
+            <select class="focal-preset-select" data-focal-select>
+              <option value="na"<?= $focalPreset === 'na' ? ' selected' : '' ?>>n/a</option>
+              <option value="16mm"<?= $focalPreset === '16mm' ? ' selected' : '' ?>>16mm</option>
+              <option value="35mm"<?= $focalPreset === '35mm' ? ' selected' : '' ?>>35mm</option>
+              <option value="50mm"<?= $focalPreset === '50mm' ? ' selected' : '' ?>>50mm</option>
+            </select>
+          </label>
           <aside class="selected-panel">
 
             <dl>
@@ -547,12 +672,22 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
                   <line x1="160" y1="224" x2="160" y2="256"/>
                   <line x1="144" y1="240" x2="176" y2="240"/>
                   <circle cx="160" cy="240" r="10"/>
+                  <text x="176" y="244" text-anchor="start" dominant-baseline="middle" style="fill:var(--violet);font-size:12px;font-weight:900;stroke:#06101d;stroke-width:3px;paint-order:stroke;stroke-linejoin:round">CG</text>
                 </g>
                 <line class="incl-axis" x1="16" y1="462" x2="304" y2="462"/>
                 <line class="incl-axis" x1="160" y1="456" x2="160" y2="468"/>
                 <text id="inclTiltLabel" class="incl-text-strong" x="16" y="24">Inclinación: 0°</text>
               </svg>
             </div>
+            <label class="focal-control focal-control-inclination">
+              Focal simulada
+              <select class="focal-preset-select" data-focal-select>
+                <option value="na"<?= $focalPreset === 'na' ? ' selected' : '' ?>>n/a </option>
+                <option value="16mm"<?= $focalPreset === '16mm' ? ' selected' : '' ?>>16mm</option>
+                <option value="35mm"<?= $focalPreset === '35mm' ? ' selected' : '' ?>>35mm</option>
+                <option value="50mm"<?= $focalPreset === '50mm' ? ' selected' : '' ?>>50mm</option>
+              </select>
+            </label>
             <div class="inclination-meta">
               <span id="inclAimLabel">Apuntar cámara: Az 180°</span>
               <span id="inclHorizonLabel">Horizonte en Y=420</span>
@@ -665,7 +800,7 @@ $sunsetAz = 298; $vlRiseAz = 124; $vlSetAz = 185; $gcRiseAz = 132; $gcSetAz = 22
           <input id="configLon" type="number" min="-180" max="180" step="0.000001" value="<?= htmlspecialchars((string)$lon) ?>">
         </label>
         <label>
-          Perfil de horizonte (SVG)
+          Perfil de horizonte (SVG http://peakfinder.com)
           <input id="configSvgFile" type="file" accept=".svg,image/svg+xml">
         </label>
         <div class="config-status" id="configStatus">Haz clic en el mapa para elegir coordenadas.</div>
@@ -698,6 +833,7 @@ window.ASTRO_DATA = {
   lat: <?= js($lat) ?>,
   lon: <?= js($lon) ?>,
   horizonSvg: <?= js($horizonSvg) ?>,
+  focalPreset: <?= js($focalPreset) ?>,
   favoriteLocations: <?= js($favorites) ?>,
   dayBaseDate: <?= js($todayDateObj->format('Y-m-d')) ?>,
   moonIllumination: <?= js($moonIllumination) ?>,

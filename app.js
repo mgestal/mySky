@@ -96,6 +96,8 @@ configStatus=document.getElementById('configStatus'),
 saveFavoriteBtn=document.getElementById('saveFavoriteBtn'),
 saveConfigBtn=document.getElementById('saveConfigBtn');
 
+const focalPresetSelects=Array.from(document.querySelectorAll('[data-focal-select]'));
+
 const timelineEventLabels=document.querySelectorAll('.timeline-labels [data-time]');
 
 let speed=1,timer=null;
@@ -108,6 +110,7 @@ let LOCATION_NAME=String(window.ASTRO_DATA?.locationName || 'A Coruña');
 let FAVORITE_LOCATIONS=Array.isArray(window.ASTRO_DATA?.favoriteLocations) ? [...window.ASTRO_DATA.favoriteLocations] : [];
 const PAN_FOV=180;
 let PEAKFINDER_FILE=String(window.ASTRO_DATA?.horizonSvg || 'PeakFinder_n43.25450_w8.39506_s_32_3_e_M_m_d.svg');
+let FOCAL_PRESET=normalizeFocalPreset(String(window.ASTRO_DATA?.focalPreset || 'na'));
 const PEAKFINDER_X_START=240;
 const PEAKFINDER_X_SPAN=32760;
 const PEAKFINDER_Y_HORIZON=1816;
@@ -131,6 +134,38 @@ const gcAltValues=document.querySelectorAll('[data-stat="gcAlt"]');
 const gcAzValues=document.querySelectorAll('[data-stat="gcAz"]');
 const mwMaxAltValues=document.querySelectorAll('[data-stat="mwMaxAlt"]');
 const mwInclinationValues=document.querySelectorAll('[data-stat="mwInclination"]');
+
+const FULL_FRAME_SENSOR={width:36,height:24};
+
+function normalizeFocalPreset(value){
+  return ['na','16mm','35mm','50mm'].includes(value) ? value : 'na';
+}
+
+function focalToFov(focalMm,sensorSizeMm){
+  return rad2deg(2*Math.atan(sensorSizeMm/(2*focalMm)));
+}
+
+function getProjectionProfile(){
+  if(FOCAL_PRESET==='na'){
+    return {
+      panorama:{hFov:PAN_FOV, yScale:350/75},
+      inclination:{hFov:62, yScale:(480*0.85-24)/90},
+    };
+  }
+  const focalMm=Number(FOCAL_PRESET.replace('mm',''));
+  const hFov=focalToFov(focalMm,FULL_FRAME_SENSOR.width);
+  const vFov=focalToFov(focalMm,FULL_FRAME_SENSOR.height);
+  return {
+    panorama:{hFov, yScale:350/vFov},
+    inclination:{hFov, yScale:(480*0.85-24)/vFov},
+  };
+}
+
+function syncFocalPresetSelects(value){
+  for(const select of focalPresetSelects){
+    select.value=value;
+  }
+}
 
 const objectCatalog=[
   {id:'jupiter', label:'Júpiter', category:'planets', kind:'point', ra:73.2, dec:22.1, magnitude:'-2.0'},
@@ -272,10 +307,11 @@ function dateForSliderMinutes(sliderMinutes){
 }
 
 function projectPanorama(az,alt){
+  const profile=getProjectionProfile().panorama;
   const d=signedAzDiff(az,panCenterAz);
-  const visible=alt>0 && Math.abs(d)<=PAN_FOV/2;
-  const x=500+(d/(PAN_FOV/2))*500;
-  const y=430-(Math.max(0,Math.min(75,alt))/75)*350;
+  const visible=alt>0 && Math.abs(d)<=profile.hFov/2;
+  const x=500+(d/(profile.hFov/2))*500;
+  const y=430-(Math.max(0,Math.min(75,alt))*profile.yScale);
   return {x,y,visible};
 }
 
@@ -398,6 +434,7 @@ function renderHorizonProfile360(){
 
 function renderHorizonProfilePanorama(){
   if(!horizonProfilePanorama || !horizonFillPanorama || !horizonAltitudes) return;
+  const profile=getProjectionProfile().panorama;
   const getHorizonAlt=(az)=>{
     const n=horizonAltitudes.length;
     if(n<2) return null;
@@ -415,11 +452,11 @@ function renderHorizonProfilePanorama(){
 
   const points=[];
   for(let x=0;x<=1000;x+=2){
-    const d=((x-500)/500)*(PAN_FOV/2);
+    const d=((x-500)/500)*(profile.hFov/2);
     const az=norm360(panCenterAz+d);
     const alt=getHorizonAlt(az);
     if(alt===null) continue;
-    const y=430-(Math.max(0,Math.min(75,alt))/75)*350;
+    const y=430-(Math.max(0,Math.min(75,alt))*profile.yScale);
     points.push({x,y});
   }
 
@@ -690,6 +727,7 @@ async function saveConfiguration(){
   formData.append('lat',String(lat));
   formData.append('lon',String(lon));
   formData.append('currentHorizonSvg',PEAKFINDER_FILE);
+  formData.append('focalPreset',FOCAL_PRESET);
   if(configSvgFileInput && configSvgFileInput.files && configSvgFileInput.files[0]){
     formData.append('horizonSvg',configSvgFileInput.files[0]);
   }
@@ -707,12 +745,15 @@ async function saveConfiguration(){
     LON=Number(data.config.lon);
     LOCATION_NAME=String(data.config.locationName || LOCATION_NAME);
     PEAKFINDER_FILE=String(data.config.horizonSvg || PEAKFINDER_FILE);
+    FOCAL_PRESET=normalizeFocalPreset(String(data.config.focalPreset || FOCAL_PRESET));
+    syncFocalPresetSelects(FOCAL_PRESET);
     ensureValidCoordinates();
     if(window.ASTRO_DATA){
       window.ASTRO_DATA.locationName=LOCATION_NAME;
       window.ASTRO_DATA.lat=LAT;
       window.ASTRO_DATA.lon=LON;
       window.ASTRO_DATA.horizonSvg=PEAKFINDER_FILE;
+      window.ASTRO_DATA.focalPreset=FOCAL_PRESET;
     }
 
     if(configStatus) configStatus.textContent='Configuración guardada. Recargando cálculos...';
@@ -895,6 +936,37 @@ function timeLabelToSliderValue(hhmm){
   const h=Number(m[1]), mi=Number(m[2]);
   const mins=h*60+mi;
   return h<12 ? 1440+mins : mins;
+}
+
+const SKY_NIGHT_BG="radial-gradient(circle at center, rgba(2,7,15,.02), rgba(2,7,15,.30) 70%, rgba(0,0,0,.72) 100%), url('cielo360.png')";
+const SKY_DAY_BG="radial-gradient(120% 100% at 50% 100%, rgba(255,255,255,.20) 0%, rgba(171,211,243,.14) 38%, rgba(112,174,220,.10) 62%, rgba(72,146,199,.18) 100%), radial-gradient(14% 9% at 18% 28%, rgba(255,255,255,.72) 0%, rgba(255,255,255,.20) 58%, rgba(255,255,255,0) 100%), radial-gradient(16% 10% at 44% 32%, rgba(255,255,255,.70) 0%, rgba(255,255,255,.18) 60%, rgba(255,255,255,0) 100%), radial-gradient(15% 9% at 70% 24%, rgba(255,255,255,.66) 0%, rgba(255,255,255,.16) 58%, rgba(255,255,255,0) 100%), radial-gradient(13% 8% at 82% 40%, rgba(255,255,255,.60) 0%, rgba(255,255,255,.14) 62%, rgba(255,255,255,0) 100%), linear-gradient(180deg, #69a9d8 0%, #74b7e3 48%, #9cd0ef 100%)";
+const SKY_PANORAMA_NIGHT_BG="radial-gradient(140% 120% at 50% 100%, rgba(12,22,41,.22) 0%, rgba(5,11,24,.62) 46%, rgba(2,7,15,.95) 100%), radial-gradient(circle at 14% 24%, rgba(255,255,255,.90) 0 1px, rgba(255,255,255,0) 1.9px), radial-gradient(circle at 28% 15%, rgba(255,255,255,.78) 0 .9px, rgba(255,255,255,0) 1.7px), radial-gradient(circle at 43% 34%, rgba(255,255,255,.82) 0 1.1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 61% 21%, rgba(255,255,255,.84) 0 1px, rgba(255,255,255,0) 1.8px), radial-gradient(circle at 77% 29%, rgba(255,255,255,.76) 0 .9px, rgba(255,255,255,0) 1.7px), radial-gradient(circle at 88% 17%, rgba(255,255,255,.80) 0 1px, rgba(255,255,255,0) 1.8px), linear-gradient(180deg, #081427 0%, #050c19 56%, #03070f 100%)";
+
+function updateSky360Background(val,sunAlt){
+  const skyBg360=document.getElementById('skyBg360');
+  if(!skyBg360 && !skyPhoto) return;
+
+  const astro=window.ASTRO_DATA||{};
+  const sunriseValue=timeLabelToSliderValue(astro.sunrise);
+  const sunsetValue=timeLabelToSliderValue(astro.sunset);
+
+  let isNight=sunAlt<=-0.833;
+  if(sunriseValue!==null && sunsetValue!==null){
+    if(sunsetValue<=sunriseValue){
+      isNight=val>=sunsetValue && val<=sunriseValue;
+    }else{
+      isNight=val>=sunsetValue || val<=sunriseValue;
+    }
+  }
+
+  if(skyBg360){
+    skyBg360.classList.toggle('sky-night',isNight);
+    skyBg360.classList.toggle('sky-day',!isNight);
+    skyBg360.style.setProperty('background-image',isNight ? SKY_NIGHT_BG : SKY_DAY_BG,'important');
+  }
+  if(skyPhoto){
+    skyPhoto.style.setProperty('background-image',isNight ? SKY_PANORAMA_NIGHT_BG : SKY_DAY_BG,'important');
+  }
 }
 
 function updateTimelineLabelPositions(){
@@ -1195,13 +1267,19 @@ function renderInclinationView(dateObj,gcAA){
   const cx=160;
   const cameraAz=gcAA.az;
   const cameraAlt=gcAA.alt;
-  const hFov=62;
-  const vFov=93;
+  const horizonY=height*0.85;
+  const skyTopY=24;
+  const profile=getProjectionProfile().inclination;
+  const hFov=profile.hFov;
+  const skyScale=profile.yScale;
 
   const project=(az,alt)=>{
     const dx=signedAzDiff(az,cameraAz)/(hFov/2);
-    const dy=(alt-cameraAlt)/(vFov/2);
-    return {x:cx + dx*(width/2), y:(height/2) - dy*(height/2)};
+    const clampedAlt=Math.max(-20,Math.min(90,alt));
+    return {
+      x:cx + dx*(width/2),
+      y:horizonY - (clampedAlt*skyScale)
+    };
   };
 
   const getHorizonAltAtAz=(az)=>{
@@ -1219,7 +1297,7 @@ function renderInclinationView(dateObj,gcAA){
     return a0 + (a1-a0)*t;
   };
 
-  const baseHorizonY=height*0.85;
+  const baseHorizonY=horizonY;
   const horizonRelief=height*0.13;
   const horizonPoints=[];
   for(let x=0;x<=width;x+=4){
@@ -1350,7 +1428,8 @@ function updateDirections360(){
 }
 
 function updatePanoramaLabels(){
-  const left=norm360(panCenterAz-PAN_FOV/2), center=norm360(panCenterAz), right=norm360(panCenterAz+PAN_FOV/2);
+  const profile=getProjectionProfile().panorama;
+  const left=norm360(panCenterAz-profile.hFov/2), center=norm360(panCenterAz), right=norm360(panCenterAz+profile.hFov/2);
   const fmt=az=>`${directionName(az)} ${Math.round(az)}°`;
   if(panLeftLabel) panLeftLabel.textContent=fmt(left);
   if(panCenterLabel) panCenterLabel.textContent=fmt(center);
@@ -1363,9 +1442,9 @@ function updatePanoramaLabels(){
     ];
     dyn.innerHTML=dirs.map(d=>{
       const diff=signedAzDiff(d.az,center);
-      if(Math.abs(diff)>PAN_FOV/2) return '';
-      const x=500+(diff/(PAN_FOV/2))*500;
-      return `<text class="dir" x="${x.toFixed(1)}" y="490">${d.label}</text><text class="deg" x="${x.toFixed(1)}" y="508">${Math.round(norm360(d.az))}°</text>`;
+      if(Math.abs(diff)>profile.hFov/2) return '';
+      const x=500+(diff/(profile.hFov/2))*500;
+      return `<text class="dir" x="${x.toFixed(1)}" y="410">${d.label}</text><text class="deg" x="${x.toFixed(1)}" y="428">${Math.round(norm360(d.az))}°</text>`;
     }).join('');
   }
   if(panoramaHeading) panoramaHeading.textContent=`${Math.round(center)}° (${directionName(center)})`;
@@ -1484,6 +1563,7 @@ function updateSky(){
 
   const sunAA=bodyAltAz('sun',dateObj);
   const sunP=projectPanorama(sunAA.az,sunAA.alt);
+  updateSky360Background(val,sunAA.alt);
   movePanMarker(sunPositionMarker,sunP,710,430);
   move360Marker(sunPosition360,project360(sunAA.az,sunAA.alt));
 
@@ -1736,6 +1816,17 @@ if(saveFavoriteBtn){
 }
 if(configFavoritesSelect){
   configFavoritesSelect.addEventListener('change',()=>applyFavoriteSelection(configFavoritesSelect.value));
+}
+if(focalPresetSelects.length){
+  syncFocalPresetSelects(FOCAL_PRESET);
+  for(const select of focalPresetSelects){
+    select.addEventListener('change',()=>{
+      FOCAL_PRESET=normalizeFocalPreset(select.value);
+      syncFocalPresetSelects(FOCAL_PRESET);
+      if(window.ASTRO_DATA) window.ASTRO_DATA.focalPreset=FOCAL_PRESET;
+      queueSkyUpdate();
+    });
+  }
 }
 if(satelliteLayerToggle){
   satelliteLayerToggle.addEventListener('change',()=>setSatelliteLayerEnabled(satelliteLayerToggle.checked));

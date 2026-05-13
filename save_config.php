@@ -14,10 +14,15 @@ $latRaw = $_POST['lat'] ?? null;
 $lonRaw = $_POST['lon'] ?? null;
 $locationNameRaw = $_POST['locationName'] ?? null;
 $postedHorizonSvg = trim((string)($_POST['currentHorizonSvg'] ?? ''));
+$postedFocalPreset = trim((string)($_POST['focalPreset'] ?? 'na'));
 
 $normalizeHorizonSvg = static function (string $value): string {
     $value = trim($value);
     return $value === '' ? 'default.svg' : $value;
+};
+
+$normalizeFocalPreset = static function (string $value): string {
+    return in_array($value, ['na', '16mm', '35mm', '50mm'], true) ? $value : 'na';
 };
 
 if (!is_numeric($latRaw) || !is_numeric($lonRaw)) {
@@ -52,6 +57,7 @@ $current = [
     'lat' => 43.37,
     'lon' => -8.41,
     'horizonSvg' => 'default.svg',
+    'focalPreset' => 'na',
     'favorites' => [],
 ];
 
@@ -80,6 +86,8 @@ if (isset($current['favorites']) && is_array($current['favorites'])) {
         ];
     }
 }
+
+$focalPreset = $normalizeFocalPreset($postedFocalPreset);
 
 if ($action === 'save_favorite') {
     $favoriteHorizonSvg = $normalizeHorizonSvg((string)$current['horizonSvg']);
@@ -223,6 +231,7 @@ $newConfig = [
     'lat' => round($lat, 6),
     'lon' => round($lon, 6),
     'horizonSvg' => $horizonSvg,
+    'focalPreset' => $focalPreset,
     'favorites' => $favorites,
 ];
 
