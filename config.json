@@ -1,15 +1,51 @@
 {
     "locationName": "Punta Nariga",
-    "lat": 43.321188,
-    "lon": -8.911232,
-    "horizonSvg": "uploads/horizon_20260514_070105_PeakFinder-Nariga.svg",
+    "lat": 43.320627,
+    "lon": -8.91008,
+    "horizonSvg": "uploads/horizon_20260513_165833_VinxeiraGrande.claro.svg",
     "focalPreset": "na",
     "favorites": [
         {
+            "locationName": "Vinxeira",
+            "lat": 43.254422,
+            "lon": -8.395184,
+            "horizonSvg": "uploads/horizon_20260513_165832_VinxeiraGrande.claro.svg"
+        },
+        {
             "locationName": "Punta Nariga",
-            "lat": 43.321188,
-            "lon": -8.911232,
-            "horizonSvg": "uploads/horizon_20260514_070104_PeakFinder-Nariga.svg"
+            "lat": 43.320627,
+            "lon": -8.91008,
+            "horizonSvg": "uploads/horizon_20260513_102236_PeakFinder-Nariga.svg"
+        },
+        {
+            "locationName": "San Bartolo",
+            "lat": 43.105199,
+            "lon": -9.01371,
+            "horizonSvg": "default.svg"
+        },
+        {
+            "locationName": "San Vitorio",
+            "lat": 43.275929,
+            "lon": -9.157009,
+            "horizonSvg": "default.svg"
+        },
+        {
+            "locationName": "Viladonga",
+            "lat": 43.160968,
+            "lon": -7.388904,
+            "horizonSvg": "uploads/horizon_20260512_171039_CastroViladonga.svg"
+        },
+        {
+            "locationName": "Faro Finisterre",
+            "lat": 42.882411,
+            "lon": -9.271982,
+            "horizonSvg": "default.svg"
+        },
+        {
+            "locationName": "Santa María del Melque (Toledo)",
+            "lat": 39.751146,
+            "lon": -4.372971,
+            "horizonSvg": "uploads/horizon_20260512_171152_Vinxeira.svg"
         }
     ]
 }
