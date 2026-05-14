@@ -61,7 +61,7 @@ h1{margin:0;font-size:34px;line-height:1.1}
           <div class="step"><p>Selecciona la <strong>fecha</strong> en la cabecera (input, botones ← → o icono 📅) y pulsa <strong>Actualizar</strong>.</p></div>
           <div class="step"><p>Ajusta la <strong>hora</strong> con el slider del timeline o activa la reproduccion automatica y cambia la velocidad.</p></div>
           <div class="step"><p>Usa el <strong>selector de dia</strong> (debajo del timeline) para saltar entre fechas dentro del rango de +2 meses. El dia seleccionado aparece flotando sobre el slider.</p></div>
-          <div class="step"><p>Alterna entre <strong>Vista 360</strong>, <strong>Panoramica</strong> e <strong>Inclinacion</strong> con los botones superiores de la card de simulacion.</p></div>
+          <div class="step"><p>Alterna entre <strong>Vista 360</strong>, <strong>Panoramica</strong>, <strong>Inclinacion</strong> y <strong>Perfil</strong> con los botones superiores de la card de simulacion.</p></div>
           <div class="step"><p>Consulta el <strong>panel de datos</strong> (debajo de las vistas) para ver en tiempo real la altura y azimut del Centro Galactico y la Via Lactea.</p></div>
           <div class="step"><p>Activa capas y busca objetos celestes en la columna derecha para centrar la sesion en tu objetivo.</p></div>
           <div class="step"><p>Abre la <strong>Configuracion</strong> (icono ⚙️ en la cabecera) para fijar ubicacion, guardar favoritas y cargar perfil SVG de horizonte.</p></div>
@@ -74,7 +74,7 @@ h1{margin:0;font-size:34px;line-height:1.1}
         <ul>
           <li><strong>Cabecera superior</strong>: nombre de ubicacion, selector de fecha, botones de dia anterior/siguiente, boton Actualizar, icono de Manual (📖) e icono de Configuracion (⚙️).</li>
           <li><strong>Columna izquierda</strong>: resumen de tiempos astronomicos (salida/puesta Sol, Luna, Via Lactea, Centro Galactico), informacion de calculos y leyenda de colores.</li>
-          <li><strong>Zona central</strong>: visor del cielo (Vista 360, Panoramica e Inclinacion), panel de datos astronomicos, timeline horario y selector de dia.</li>
+          <li><strong>Zona central</strong>: visor del cielo (Vista 360, Panoramica, Inclinacion y Perfil), panel de datos astronomicos, timeline horario y selector de dia.</li>
           <li><strong>Columna derecha</strong>: condiciones meteorologicas actuales y prevision compacta, capas de objetos celestes y buscador.</li>
         </ul>
       </section>
@@ -82,11 +82,18 @@ h1{margin:0;font-size:34px;line-height:1.1}
       <section class="card" id="vistas">
         <h2>3. Vistas del cielo</h2>
         <ul>
-          <li><strong>Vista 360</strong>: cielo circular completo para orientacion global. Muestra posicion del Sol, Luna, Via Lactea, Centro Galactico y objetos celestes por azimut. Arrastrable para rotar. Soporta capa de satelite (toggle + zoom + Ctrl+drag).</li>
+          <li><strong>Vista 360</strong>: cielo circular completo para orientacion global. Muestra posicion del Sol, Luna, Via Lactea, Centro Galactico y objetos celestes por azimut. Arrastrable para rotar. Soporta capa de satelite (toggle + zoom + Ctrl+drag). Si mueves el mapa satelite con <strong>Ctrl+arrastrar</strong>, el centro de ese mapa pasa a alimentar las coordenadas usadas por la vista Perfil.</li>
           <li><strong>Panoramica</strong>: vista horizontal arrastrable, orientada mirando al Sur (izquierda = E/SE, centro = S, derecha = SO/O). Util para planificar encuadres fotograficos. Incluye selector de focal simulada (n/a, 16mm, 35mm, 50mm).</li>
           <li><strong>Inclinacion</strong>: estimacion vertical de la Via Lactea con referencia del Centro Galactico. Muestra la inclinacion aparente del arco en encuadre 3:2. Incluye selector de focal simulada.</li>
+          <li><strong>Perfil</strong>: incrusta Peakfinder para consultar el relieve del terreno alrededor de la ubicacion activa. Incluye enlace directo para abrir la misma vista en Peakfinder en una pestaña externa.</li>
         </ul>
-        <p>Debajo de las tres vistas hay un <strong>panel de datos</strong> compartido con Altura y Azimut del Centro Galactico, altura maxima de la Via Lactea e inclinacion, actualizados segun la hora seleccionada.</p>
+        <p>Debajo de las vistas hay un <strong>panel de datos</strong> compartido con Altura y Azimut del Centro Galactico, altura maxima de la Via Lactea e inclinacion, actualizados segun la hora seleccionada.</p>
+        <p>La vista <strong>Perfil</strong> toma las coordenadas de esta forma:</p>
+        <ul>
+          <li>Primero usa la ubicacion activa o la favorita cargada.</li>
+          <li>Si en Vista 360 mueves el mapa satelite con <strong>Ctrl+arrastrar</strong>, Peakfinder pasa a usar temporalmente el centro actual de ese mapa.</li>
+          <li>Peakfinder no devuelve de forma fiable sus coordenadas internas a MySky, por lo que la sincronizacion es solo en sentido MySky → Peakfinder.</li>
+        </ul>
       </section>
 
       <section class="card" id="timeline">
@@ -127,6 +134,7 @@ h1{margin:0;font-size:34px;line-height:1.1}
           <li><strong>Favoritas</strong>: guarda la ubicacion actual (con perfil SVG si lo has cargado) y recuperala desde el desplegable en futuras sesiones.</li>
           <li><strong>Mapa interactivo</strong>: haz clic para fijar coordenadas GPS, o usa el buscador de direccion para geocodificar automaticamente.</li>
           <li><strong>Perfil SVG</strong>: carga un horizonte personalizado exportado desde PeakFinder u otra herramienta compatible. <strong>Importante:</strong> en PeakFinder selecciona el modo <em>Silueta</em> al exportar el SVG, no el modo <em>Contorno</em>. El fichero de silueta es compacto (~80-130 KB); el de contorno puede superar 2 MB y sera rechazado por el servidor.</li>
+          <li><strong>Perfil del terreno embebido</strong>: la vista Perfil usa las coordenadas guardadas en la ubicacion actual o en la favorita seleccionada como punto de partida para abrir Peakfinder.</li>
           <li><strong>Visibilidad de capas graficas</strong>: activa o desactiva marcadores de Sol, Luna, Via Lactea, Centro Galactico, arco solar y controles de animacion.</li>
         </ul>
         <p>Al guardar, la configuracion queda persistida en <strong>config.json</strong> en el servidor.</p>

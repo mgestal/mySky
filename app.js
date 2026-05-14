@@ -40,9 +40,13 @@ speedButtons=document.querySelectorAll('[data-speed]'),
 btn360=document.getElementById('btn360'),
 btnPanorama=document.getElementById('btnPanorama'),
 btnInclination=document.getElementById('btnInclination'),
+btnTerrain=document.getElementById('btnTerrain'),
 view360=document.getElementById('view360'),
 viewPanorama=document.getElementById('viewPanorama'),
 viewInclination=document.getElementById('viewInclination'),
+viewTerrain=document.getElementById('viewTerrain'),
+terrainIframe=document.getElementById('terrainIframe'),
+terrainOpenExternal=document.getElementById('terrainOpenExternal'),
 nowMarker360=document.getElementById('nowMarker360'),
 skyPanel=document.getElementById('skyPanel'),
 skyPhoto=document.getElementById('skyPhoto'),
@@ -114,6 +118,8 @@ let LAT=Number(window.ASTRO_DATA?.lat ?? 43.37);
 let LON=Number(window.ASTRO_DATA?.lon ?? -8.41);
 let LOCATION_NAME=String(window.ASTRO_DATA?.locationName || 'A Coruña');
 let FAVORITE_LOCATIONS=Array.isArray(window.ASTRO_DATA?.favoriteLocations) ? [...window.ASTRO_DATA.favoriteLocations] : [];
+let terrainBaseLocation={lat:LAT, lon:LON, name:LOCATION_NAME};
+let terrainOverrideLocation=null;
 const PAN_FOV=180;
 let PEAKFINDER_FILE=String(window.ASTRO_DATA?.horizonSvg || 'PeakFinder_n43.25450_w8.39506_s_32_3_e_M_m_d.svg');
 let FOCAL_PRESET=normalizeFocalPreset(String(window.ASTRO_DATA?.focalPreset || 'na'));
@@ -234,26 +240,84 @@ function minutesToLabel(v){
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
+function formatPeakfinderDate(dateObj){
+  if(!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return '';
+  return dateObj.toISOString().replace(/\.\d{3}Z$/,'Z');
+}
+
+function getSelectedTerrainDate(){
+  const astro=window.ASTRO_DATA||{};
+  return dateForTimeLabel(astro.sunset,false);
+}
+
+function buildPeakfinderUrl(lat,lon,name,dateObj){
+  const safeLat=Number.isFinite(Number(lat)) ? Number(lat) : 43.37;
+  const safeLon=Number.isFinite(Number(lon)) ? Number(lon) : -8.41;
+  const safeName=String(name || '').trim() || 'Ubicacion';
+  const params=new URLSearchParams({
+    lat: safeLat.toFixed(6),
+    lng: safeLon.toFixed(6),
+    fov: '110',
+    cfg: 'es',
+    name: safeName,
+  });
+  const formattedDate=formatPeakfinderDate(dateObj);
+  if(formattedDate) params.set('date',formattedDate);
+  return `https://www.peakfinder.com/es/?${params.toString()}`;
+}
+
+function setTerrainBaseLocation(lat,lon,name){
+  terrainBaseLocation={
+    lat:Number.isFinite(Number(lat)) ? Number(lat) : LAT,
+    lon:Number.isFinite(Number(lon)) ? Number(lon) : LON,
+    name:String(name || '').trim() || LOCATION_NAME,
+  };
+}
+
+function getTerrainLocation(){
+  return terrainOverrideLocation || terrainBaseLocation;
+}
+
+function updateTerrainView(latOverride,lonOverride,nameOverride,dateOverride){
+  if(!terrainIframe && !terrainOpenExternal) return;
+  const terrainLocation=getTerrainLocation();
+  const lat=Number.isFinite(Number(latOverride)) ? Number(latOverride) : terrainLocation.lat;
+  const lon=Number.isFinite(Number(lonOverride)) ? Number(lonOverride) : terrainLocation.lon;
+  const locationName=String(nameOverride || '').trim() || terrainLocation.name;
+  const selectedDate=dateOverride instanceof Date ? dateOverride : getSelectedTerrainDate();
+  const url=buildPeakfinderUrl(lat,lon,locationName,selectedDate);
+  if(terrainIframe && terrainIframe.src!==url) terrainIframe.src=url;
+  if(terrainOpenExternal){
+    terrainOpenExternal.href=url;
+    terrainOpenExternal.setAttribute('aria-label',`Abrir perfil del terreno de ${locationName} en Peakfinder`);
+  }
+}
+
 function setView(mode){
   const is360=mode==='360';
   const isPanorama=mode==='panorama';
   const isInclination=mode==='inclination';
+  const isTerrain=mode==='terrain';
   view360.classList.toggle('active',is360);
   viewPanorama.classList.toggle('active',isPanorama);
   if(viewInclination) viewInclination.classList.toggle('active',isInclination);
+  if(viewTerrain) viewTerrain.classList.toggle('active',isTerrain);
   btn360.classList.toggle('active',is360);
   btnPanorama.classList.toggle('active',isPanorama);
   if(btnInclination) btnInclination.classList.toggle('active',isInclination);
+  if(btnTerrain) btnTerrain.classList.toggle('active',isTerrain);
   if(satelliteControlsRow) satelliteControlsRow.style.display=is360?'flex':'none';
   if(is360 && satelliteEnabled && satelliteMap){
     setTimeout(()=>{ if(satelliteMap) satelliteMap.invalidateSize(); },80);
   }
+  if(isTerrain) updateTerrainView();
   localStorage.setItem('selectedView',mode);
 }
 
 btn360.addEventListener('click',()=>setView('360'));
 btnPanorama.addEventListener('click',()=>setView('panorama'));
 if(btnInclination) btnInclination.addEventListener('click',()=>setView('inclination'));
+if(btnTerrain) btnTerrain.addEventListener('click',()=>setView('terrain'));
 
 function julianDate(dateObj){ return dateObj.getTime()/86400000 + 2440587.5; }
 
@@ -509,6 +573,7 @@ function updateSatellite360Rotation(){
 
 function initSatellite360Map(){
   if(typeof L==='undefined' || !satellite360El || satelliteMap) return;
+  const terrainLocation=getTerrainLocation();
   satelliteMap=L.map(satellite360El,{
     zoomControl:false,
     attributionControl:true,
@@ -518,11 +583,22 @@ function initSatellite360Map(){
     boxZoom:false,
     keyboard:false,
     touchZoom:false
-  }).setView([LAT,LON],15);
+  }).setView([terrainLocation.lat,terrainLocation.lon],15);
 
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
     attribution:'Tiles &copy; Esri'
   }).addTo(satelliteMap);
+
+  satelliteMap.on('move',()=>{
+    const center=satelliteMap ? satelliteMap.getCenter() : null;
+    if(!center) return;
+    terrainOverrideLocation={
+      lat:center.lat,
+      lon:center.lng,
+      name:getTerrainLocation().name,
+    };
+    updateTerrainView(center.lat,center.lng,terrainOverrideLocation.name);
+  });
 
   updateSatellite360Rotation();
 }
@@ -539,7 +615,8 @@ function setSatelliteLayerEnabled(enabled){
     const skyBg360=document.getElementById('skyBg360');
     if(skyBg360) skyBg360.classList.add('hidden');
     if(satelliteMap){
-      satelliteMap.setView([LAT,LON],satelliteMap.getZoom()||15);
+      const terrainLocation=getTerrainLocation();
+      satelliteMap.setView([terrainLocation.lat,terrainLocation.lon],satelliteMap.getZoom()||15);
       setTimeout(()=>{ if(satelliteMap) satelliteMap.invalidateSize(); },80);
     }
   }else{
@@ -611,8 +688,12 @@ function applyFavoriteSelection(rawValue){
     if(configMarker) configMarker.setLatLng([lat,lon]);
     if(configMap) configMap.setView([lat,lon],13);
     PEAKFINDER_FILE=horizonSvgToLoad;
+    terrainOverrideLocation=null;
+    setTerrainBaseLocation(lat,lon,locationName);
     updateCurrentHorizonHint(PEAKFINDER_FILE);
     if(window.ASTRO_DATA) window.ASTRO_DATA.horizonSvg=horizonSvgToLoad;
+    if(satelliteMap && satelliteEnabled) satelliteMap.setView([lat,lon],satelliteMap.getZoom()||15);
+    updateTerrainView(lat,lon,locationName);
     loadHorizonProfile();
     queueSkyUpdate();
     if(configStatus) configStatus.textContent=`Favorita cargada: ${locationName}`;
@@ -816,6 +897,8 @@ async function saveConfiguration(){
     LON=Number(data.config.lon);
     LOCATION_NAME=String(data.config.locationName || LOCATION_NAME);
     PEAKFINDER_FILE=String(data.config.horizonSvg || PEAKFINDER_FILE);
+    terrainOverrideLocation=null;
+    setTerrainBaseLocation(LAT,LON,LOCATION_NAME);
     updateCurrentHorizonHint(PEAKFINDER_FILE);
     FOCAL_PRESET=normalizeFocalPreset(String(data.config.focalPreset || FOCAL_PRESET));
     syncFocalPresetSelects(FOCAL_PRESET);
@@ -827,6 +910,7 @@ async function saveConfiguration(){
       window.ASTRO_DATA.horizonSvg=PEAKFINDER_FILE;
       window.ASTRO_DATA.focalPreset=FOCAL_PRESET;
     }
+    updateTerrainView();
 
     if(configStatus) configStatus.textContent='Configuración guardada. Recargando cálculos...';
     window.location.reload();
@@ -1555,6 +1639,9 @@ function updateSky(){
   }
 
   const dateObj=dateForSliderMinutes(val);
+  if(viewTerrain && viewTerrain.classList.contains('active')){
+    updateTerrainView();
+  }
   const gcEq=galToEq(0,0);
   const gcAA=eqToAltAz(gcEq.ra,gcEq.dec,dateObj);
   const mw=buildGalacticPlane(dateObj);
@@ -2032,6 +2119,7 @@ setSatelliteLayerEnabled(localStorage.getItem('satelliteLayer360')==='1');
 })();
 
 setView(localStorage.getItem('selectedView')||'360');
+updateTerrainView();
 updateTimelineLabelPositions();
 updateTimelineSegments();
 updateSky();

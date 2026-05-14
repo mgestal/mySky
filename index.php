@@ -548,6 +548,14 @@ $vlSetAz   = 360 - $vlRiseAz;
 .header-icons{display:flex;gap:8px;align-items:center;margin-left:12px}
 .header-icon-btn{background:transparent;border:none;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all 0.15s ease}
 .header-icon-btn:hover{background:rgba(255,255,255,.1)}
+.view-toggle{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:min(560px,100%)}
+.view-toggle button{padding:8px 8px;font-size:9px;line-height:1.1;white-space:nowrap;min-width:0}
+.terrain-stage{margin-top:16px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#071120}
+.terrain-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(8,17,30,.82);color:#dce9fb;font-size:13px;font-weight:700}
+.terrain-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:900;white-space:nowrap}
+.terrain-frame{display:block;width:100%;height:560px;border:0;background:#040b16}
+@media(max-width:900px){.terrain-frame{height:460px}}
+@media(max-width:640px){.view-toggle button{padding:7px 5px;font-size:10px}}
 </style>
 </head>
 <body>
@@ -613,9 +621,10 @@ $vlSetAz   = 360 - $vlRiseAz;
           <div class="controls">
             <div class="controls-row">
               <div class="view-toggle">
-                <button type="button" id="btn360" class="active">Vista 360°</button>
-                <button type="button" id="btnPanorama">Panorámica</button>
-                <button type="button" id="btnInclination">Inclinación</button>
+                <button type="button" id="btn360" class="active">360°</button>
+                <button type="button" id="btnPanorama">Pano</button>
+                <button type="button" id="btnInclination">Incl.</button>
+                <button type="button" id="btnTerrain">Perfil &nbsp; </button>
               </div>
             </div>
             <div class="controls-row compact-right">
@@ -757,6 +766,16 @@ $vlSetAz   = 360 - $vlRiseAz;
               <span id="inclAimLabel">Apuntar cámara: Az 180°</span>
               <span id="inclHorizonLabel">Horizonte en Y=420</span>
             </div>
+          </div>
+        </div>
+
+        <div id="viewTerrain" class="view-pane">
+          <div class="terrain-stage">
+            <div class="terrain-toolbar">
+              <span>Perfil del terreno (Peakfinder)</span>
+              <a id="terrainOpenExternal" class="terrain-link" href="https://www.peakfinder.com/es/" target="_blank" rel="noopener noreferrer">Abrir en Peakfinder</a>
+            </div>
+            <iframe id="terrainIframe" class="terrain-frame" title="Perfil del terreno en Peakfinder" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
           </div>
         </div>
 

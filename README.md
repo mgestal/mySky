@@ -1,12 +1,13 @@
 # MySky Astro Viewer
 
-Visor astronomico web con tres modos de representacion del cielo, timeline nocturno, selector de dia, capas de objetos celestes, datos meteorologicos en tiempo real y configuracion persistente de ubicacion.
+Visor astronomico web con cuatro modos de representacion, timeline nocturno, selector de dia, capas de objetos celestes, datos meteorologicos en tiempo real y configuracion persistente de ubicacion.
 
 ## Funcionalidades principales
 
 - Vista 360 circular para orientacion completa.
 - Vista panoramica arrastrable para planificacion de encuadres.
 - Vista de inclinacion orientada al centro galactico (centrada en la card).
+- Vista de perfil del terreno embebida desde Peakfinder.
 - Timeline nocturno con hitos: ocaso, crepusculo astronomico, salida/ocultacion de Via Lactea, salida/puesta del Centro Galactico y amanecer.
 - Selector de dia: rango desde hoy hasta +2 meses, con label flotante de fecha al arrastrar.
 - Panel de datos astronomicos (Altura y Azimut del CG, altura maxima y inclinacion de la Via Lactea) debajo de las tres vistas.
@@ -18,6 +19,10 @@ Visor astronomico web con tres modos de representacion del cielo, timeline noctu
   - Localizaciones favoritas guardables y seleccionables.
   - Coordenadas GPS por clic en mapa o busqueda de direccion.
   - Carga de perfil de horizonte en SVG.
+- Sincronizacion de Peakfinder:
+  - Usa por defecto las coordenadas de la ubicacion activa o de la favorita cargada.
+  - Si la capa de satelite esta activa en Vista 360, `Ctrl + arrastrar` mueve el mapa y actualiza las coordenadas enviadas a Peakfinder.
+  - La sincronizacion es de la app hacia Peakfinder; el iframe externo no devuelve de forma fiable sus coordenadas internas a la aplicacion.
 - Ajuste de focal simulada (n/a, 16mm, 35mm, 50mm) para Panoramica e Inclinacion.
 - Capa de satelite superpuesta en Vista 360 (con zoom y arrastre Ctrl+drag).
 - Control de visibilidad de capas graficas desde el modal de configuracion.
@@ -26,7 +31,7 @@ Visor astronomico web con tres modos de representacion del cielo, timeline noctu
 
 - **Cabecera**: titulo de ubicacion, selector de fecha, botones de dia anterior/siguiente, actualizar, icono de manual (📖) e icono de configuracion (⚙️).
 - **Columna izquierda**: resumen de tiempos astronomicos, informacion del calculo y leyenda.
-- **Zona central**: visor (360 / Panoramica / Inclinacion), panel de datos, timeline horario y selector de dia.
+- **Zona central**: visor (360 / Panoramica / Inclinacion / Perfil), panel de datos, timeline horario y selector de dia.
 - **Columna derecha**: condiciones meteorologicas actuales + prevision, capas de objetos celestes.
 
 ## Archivos clave
@@ -51,5 +56,5 @@ Visor astronomico web con tres modos de representacion del cielo, timeline noctu
 Accesible desde el icono 📖 de la cabecera superior. Incluye:
 
 - Guia paso a paso de uso.
-- Descripcion de vistas, timeline, capas de objetos y meteorologia.
+- Descripcion de vistas, timeline, capas de objetos, meteorologia y perfil del terreno.
 - Descripcion del modal de configuracion y persistencia.
