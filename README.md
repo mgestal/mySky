@@ -22,10 +22,26 @@ Visor astronomico web con cuatro modos de representacion, timeline nocturno, sel
 - Sincronizacion de Peakfinder:
   - Usa por defecto las coordenadas de la ubicacion activa o de la favorita cargada.
   - Si la capa de satelite esta activa en Vista 360, `Ctrl + arrastrar` mueve el mapa y actualiza las coordenadas enviadas a Peakfinder.
+  - La hora que se pasa a Peakfinder es siempre la puesta de sol calculada para el dia activo (no varía con el timeline).
   - La sincronizacion es de la app hacia Peakfinder; el iframe externo no devuelve de forma fiable sus coordenadas internas a la aplicacion.
 - Ajuste de focal simulada (n/a, 16mm, 35mm, 50mm) para Panoramica e Inclinacion.
 - Capa de satelite superpuesta en Vista 360 (con zoom y arrastre Ctrl+drag).
 - Control de visibilidad de capas graficas desde el modal de configuracion.
+
+## Vista de perfil del terreno (Peakfinder)
+
+La pestaña **Perfil** muestra un iframe incrustado de [Peakfinder](https://www.peakfinder.com/es/) con el perfil del horizonte real alrededor de la ubicacion configurada.
+
+### Acceso
+
+Boton **Perfil** en la fila de botones de la card de Simulacion (junto a 360°, Pano e Incl.).
+
+### Comportamiento
+
+- **Coordenadas**: se toman de la ubicacion activa o de la favorita cargada. Si en Vista 360 se mueve el mapa satelite con `Ctrl + arrastrar`, Peakfinder pasa a usar temporalmente el centro de ese mapa.
+- **Fecha/hora**: siempre se usa la puesta de sol calculada para el dia activo, independientemente de la posicion del slider del timeline.
+- **Enlace externo**: el boton «Abrir en Peakfinder» de la barra superior abre la misma URL en una pestaña nueva.
+- **Limitacion de sincronizacion**: la comunicacion es unidireccional (MySky → Peakfinder). El iframe no puede devolver coordenadas ni cambios realizados dentro de Peakfinder a la aplicacion.
 
 ## Layout de la interfaz
 
