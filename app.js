@@ -18,6 +18,8 @@ sunPath=document.getElementById('sunPath'),
 sunPath360=document.getElementById('sunPath360'),
 sunPositionMarker=document.getElementById('sunPositionMarker'),
 sunPosition360=document.getElementById('sunPosition360'),
+moonPositionMarker=document.getElementById('moonPositionMarker'),
+moonPosition360=document.getElementById('moonPosition360'),
 sunriseMarker360=document.getElementById('sunriseMarker360'),
 sunsetMarker360=document.getElementById('sunsetMarker360'),
 moonriseMarker360=document.getElementById('moonriseMarker360'),
@@ -1707,6 +1709,17 @@ function updateSky(){
     }else{
       moonDot.style.display='none';
     }
+  }
+
+  if(moonPositionMarker){
+    const moonAA=bodyAltAz('moon',dateObj);
+    const moonP=projectPanorama(moonAA.az,moonAA.alt);
+    movePanMarker(moonPositionMarker,moonP,710,430);
+  }
+
+  if(moonPosition360){
+    const moonAA=bodyAltAz('moon',dateObj);
+    move360Marker(moonPosition360,project360(moonAA.az,moonAA.alt));
   }
 
   if(nowMarker360){

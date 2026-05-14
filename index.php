@@ -652,6 +652,7 @@ $vlSetAz   = 360 - $vlRiseAz;
                 <g id="sunsetMarker360" class="mark" style="--c:#ffb02e"><circle cx="320" cy="320" r="7"/><text x="332" y="316">Puesta Sol</text></g>
                 <g id="moonriseMarker360" class="mark" style="--c:#32d4ff"><circle cx="320" cy="320" r="7"/><text x="332" y="316">Salida Luna</text></g>
                 <g id="moonsetMarker360" class="mark" style="--c:#32d4ff"><circle cx="320" cy="320" r="7"/><text x="332" y="316">Puesta Luna</text></g>
+                <g id="moonPosition360" class="moon-current" style="--c:#d9d9d9"><circle cx="320" cy="320" r="7"/><text x="332" y="316">Luna</text></g>
                 <?= marker360($vlRiseAz, 'Salida VL', $vlRise, '#56f06a', 238, 'vlRiseMarker360') ?>
                 <?= marker360($vlRiseAz, 'Salida cola VL', $vlRise, '#56f06a', 238, 'vlRiseTailMarker360') ?>
                 <?= marker360($vlSetAz, 'Ocultación cola VL', $vlSet, '#ff4f45', 238, 'vlSetMarker360') ?>
@@ -691,8 +692,7 @@ $vlSetAz   = 360 - $vlRiseAz;
               <g id="sunriseMarker" class="svg-marker orange-m"><line x1="710" y1="430" x2="710" y2="402"/><circle cx="710" cy="430" r="8"/><text x="675" y="398">Salida del Sol</text></g>
               <g id="sunsetMarker" class="svg-marker orange-m"><line x1="710" y1="430" x2="710" y2="402"/><circle cx="710" cy="430" r="8"/><text x="675" y="398">Puesta del Sol</text></g>
               <g id="moonriseMarker" class="svg-marker cyan-m"><line x1="710" y1="430" x2="710" y2="402"/><circle cx="710" cy="430" r="8"/><text x="675" y="398">Salida Luna</text></g>
-              <g id="moonsetMarker" class="svg-marker cyan-m"><line x1="710" y1="430" x2="710" y2="402"/><circle cx="710" cy="430" r="8"/><text x="675" y="398">Puesta Luna</text></g>
-              <g id="mwMarker" class="svg-marker green-m"><line x1="250" y1="430" x2="250" y2="400"/><circle cx="250" cy="430" r="8"/><text x="215" y="390">Vía Láctea<tspan x="215" dy="18">visible</tspan></text></g>
+              <g id="moonsetMarker" class="svg-marker cyan-m"><line x1="710" y1="430" x2="710" y2="402"/><circle cx="710" cy="430" r="8"/><text x="675" y="398">Puesta Luna</text></g>              <g id="moonPositionMarker" class="svg-marker moon-current"><circle cx="710" cy="430" r="10"/><text x="675" y="398">Luna</text></g>              <g id="mwMarker" class="svg-marker green-m"><line x1="250" y1="430" x2="250" y2="400"/><circle cx="250" cy="430" r="8"/><text x="215" y="390">Vía Láctea<tspan x="215" dy="18">visible</tspan></text></g>
               <g id="gcMarker" class="svg-marker violet-m"><path d="M515 305 l0 28 M501 319 l28 0"/><circle cx="515" cy="319" r="11"/><text x="470" y="285">Centro Galáctico</text></g>
             </svg>
           </div>
@@ -858,7 +858,7 @@ $vlSetAz   = 360 - $vlRiseAz;
           <select id="configFavoritesSelect">
             <option value="">Selecciona una favorita...</option>
             <?php foreach ($favorites as $favorite): ?>
-                      <option value='<?= htmlspecialchars(json_encode($favorite, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8') ?>'><?= htmlspecialchars($favorite['locationName']) ?> · <?= htmlspecialchars((string)$favorite['lat']) ?>, <?= htmlspecialchars((string)$favorite['lon']) ?></option>
+                      <option value='<?= htmlspecialchars(json_encode($favorite, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8') ?>'><?= htmlspecialchars($favorite['locationName']) ?> · <?= htmlspecialchars((string)$favorite['lat']) ?> </option>
             <?php endforeach; ?>
           </select>
           <div class="config-hint">Las favoritas pueden guardar también su perfil de horizonte.</div>
