@@ -84,6 +84,14 @@ function hm($timestamp): string {
     if ($timestamp === false || $timestamp === true || $timestamp === null) return '—';
     return (new DateTimeImmutable('@' . $timestamp))->setTimezone(new DateTimeZone('Europe/Madrid'))->format('H:i');
 }
+function hmWithOffset($timestamp, string $date): array {
+    if ($timestamp === false || $timestamp === true || $timestamp === null) return ['time' => '—', 'nextDay' => false];
+    $dtUtc = new DateTimeImmutable('@' . $timestamp);
+    $dtLocal = $dtUtc->setTimezone(new DateTimeZone('Europe/Madrid'));
+    $dateObj = new DateTimeImmutable($date . ' 00:00:00', new DateTimeZone('Europe/Madrid'));
+    $isNextDay = $dtLocal->format('Y-m-d') !== $dateObj->format('Y-m-d');
+    return ['time' => $dtLocal->format('H:i'), 'nextDay' => $isNextDay];
+}
 function hhmmToMinutes(string $hhmm): int {
     if (!preg_match('/^(\d{2}):(\d{2})$/', $hhmm, $m)) return 0;
     return ((int)$m[1]) * 60 + (int)$m[2];
@@ -349,6 +357,13 @@ $moonPos   = moonPosition($date);
 $moonTimes = riseSetUT($moonPos['ra'], $moonPos['dec'], $lat, $lon, $date);
 $moonRise  = ($moonTimes['rise'] !== null) ? utToLocal($moonTimes['rise'], $date) : '—';
 $moonSet   = ($moonTimes['set']  !== null) ? utToLocal($moonTimes['set'],  $date) : '—';
+// Determine if Moon set is on next day (if set time < rise time, it must be next day)
+$moonSetNextDay = false;
+if ($moonSet !== '—' && $moonRise !== '—') {
+    $setMin = hhmmToMinutes($moonSet);
+    $riseMin = hhmmToMinutes($moonRise);
+    $moonSetNextDay = $setMin < $riseMin;
+}
 $moonIllumination = moonPhaseIllumination($date);
 
 // Dark window boundaries in UT hours
@@ -560,8 +575,8 @@ $vlSetAz   = 360 - $vlRiseAz;
         <table class="times">
           <tr><td>☀️ Salida del Sol</td><td><?= $sunrise ?></td></tr>
           <tr class="orange"><td>🌅 Puesta del Sol</td><td><?= $sunset ?></td></tr>
-          <tr><td>☾ Salida de la Luna</td><td><?= $moonRise ?></td></tr>
-          <tr><td>☽ Puesta de la Luna</td><td><?= $moonSet ?></td></tr>
+          <tr><td>☾ Salida de la Luna</td><td><?= $moonRise ?><?= $moonRiseNextDay && $moonRise !== '—' ? ' <span style="color:#32d4ff;font-weight:bold">(+1)</span>' : '' ?></td></tr>
+          <tr><td>☽ Puesta de la Luna</td><td><?= $moonSet ?><?= $moonSetNextDay && $moonSet !== '—' ? ' <span style="color:#32d4ff;font-weight:bold">(+1)</span>' : '' ?></td></tr>
           <tr><td>◐ Iluminación lunar</td><td><?= $moonIllumination ?>%</td></tr>
           <tr><td>◐ Fin crepúsculo astronómico</td><td><?= $astroEnd ?></td></tr>
           <tr><td>◑ Inicio crepúsculo astronómico</td><td><?= $astroBegin ?></td></tr>
