@@ -476,8 +476,8 @@ $vlSetAz   = 360 - $vlRiseAz;
 .controls-row{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap;width:100%}
 .controls-row.compact-right{justify-content:flex-end}
 .auto-speed-row{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:nowrap;white-space:nowrap;max-width:100%}
-.sat-block{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.sat-layer-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.sat-block{display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:100%}
+.sat-layer-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:nowrap;white-space:nowrap;max-width:100%}
 .sat-drag-hint{color:#9ec5f4;font-size:12px;font-weight:700;white-space:nowrap}
 .sat-zoom-controls{display:flex;gap:6px}
 .sat-zoom-btn{background:#18283d;border:1px solid #2b4260;color:#dce7f5;border-radius:8px;padding:8px 11px;font-weight:900;cursor:pointer;line-height:1}
@@ -615,6 +615,7 @@ $vlSetAz   = 360 - $vlRiseAz;
             <div id="satelliteControlsRow" class="controls-row compact-right">
               <div class="sat-block">
                 <div class="sat-layer-controls">
+                  <label class="switch-label">Horizonte <input id="horizonLayerToggle" type="checkbox" checked><span class="switch"></span></label>
                   <label class="switch-label">Capa satélite <input id="satelliteLayerToggle" type="checkbox"><span class="switch"></span></label>
                   <div class="sat-zoom-controls">
                     <button type="button" id="satZoomOut" class="sat-zoom-btn" aria-label="Alejar mapa satélite">-</button>

@@ -68,6 +68,7 @@ skySvg360=document.getElementById('skySvg360'),
 sky360Rotate=document.getElementById('sky360Rotate'),
 heading360=document.getElementById('heading360'),
 satelliteControlsRow=document.getElementById('satelliteControlsRow'),
+horizonLayerToggle=document.getElementById('horizonLayerToggle'),
 satelliteLayerToggle=document.getElementById('satelliteLayerToggle'),
 satZoomIn=document.getElementById('satZoomIn'),
 satZoomOut=document.getElementById('satZoomOut'),
@@ -103,6 +104,7 @@ const timelineEventLabels=document.querySelectorAll('.timeline-labels [data-time
 let speed=1,timer=null;
 let panCenterAz=180;
 let skyCenterAz=0;
+let horizonEnabled=true;
 let satelliteEnabled=false;
 let LAT=Number(window.ASTRO_DATA?.lat ?? 43.37);
 let LON=Number(window.ASTRO_DATA?.lon ?? -8.41);
@@ -532,8 +534,6 @@ function setSatelliteLayerEnabled(enabled){
     if(satellite360El) satellite360El.classList.add('active');
     const skyBg360=document.getElementById('skyBg360');
     if(skyBg360) skyBg360.classList.add('hidden');
-    if(horizonProfile360) horizonProfile360.style.display='none';
-    if(horizonFill360) horizonFill360.style.display='none';
     if(satelliteMap){
       satelliteMap.setView([LAT,LON],satelliteMap.getZoom()||15);
       setTimeout(()=>{ if(satelliteMap) satelliteMap.invalidateSize(); },80);
@@ -542,11 +542,24 @@ function setSatelliteLayerEnabled(enabled){
     if(satellite360El) satellite360El.classList.remove('active');
     const skyBg360=document.getElementById('skyBg360');
     if(skyBg360) skyBg360.classList.remove('hidden');
-    if(horizonProfile360) horizonProfile360.style.display='';
-    if(horizonFill360) horizonFill360.style.display='';
   }
 
+  applyHorizonVisibility360();
+
   localStorage.setItem('satelliteLayer360',satelliteEnabled?'1':'0');
+}
+
+function applyHorizonVisibility360(){
+  const displayValue=horizonEnabled ? '' : 'none';
+  if(horizonProfile360) horizonProfile360.style.display=displayValue;
+  if(horizonFill360) horizonFill360.style.display=displayValue;
+}
+
+function setHorizonLayerEnabled(enabled){
+  horizonEnabled=!!enabled;
+  if(horizonLayerToggle) horizonLayerToggle.checked=horizonEnabled;
+  applyHorizonVisibility360();
+  localStorage.setItem('horizonLayer360',horizonEnabled ? '1' : '0');
 }
 
 let configMap=null;
@@ -1865,6 +1878,9 @@ if(focalPresetSelects.length){
 if(satelliteLayerToggle){
   satelliteLayerToggle.addEventListener('change',()=>setSatelliteLayerEnabled(satelliteLayerToggle.checked));
 }
+if(horizonLayerToggle){
+  horizonLayerToggle.addEventListener('change',()=>setHorizonLayerEnabled(horizonLayerToggle.checked));
+}
 if(satZoomIn){
   satZoomIn.addEventListener('click',()=>{
     if(satelliteEnabled && satelliteMap) satelliteMap.setZoom(Math.min(19,satelliteMap.getZoom()+1));
@@ -1891,6 +1907,7 @@ document.addEventListener('keydown',e=>{
 });
 
 ensureValidCoordinates();
+setHorizonLayerEnabled(localStorage.getItem('horizonLayer360')!=='0');
 setSatelliteLayerEnabled(localStorage.getItem('satelliteLayer360')==='1');
 
 // Load and wire up visibility settings

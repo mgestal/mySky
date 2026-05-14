@@ -224,6 +224,8 @@ if (isset($_FILES['horizonSvg']) && is_array($_FILES['horizonSvg']) && ($_FILES[
     }
 
     $horizonSvg = 'uploads/' . $targetName;
+} elseif ($postedHorizonSvg !== '') {
+    $horizonSvg = $normalizeHorizonSvg($postedHorizonSvg);
 }
 
 $newConfig = [
