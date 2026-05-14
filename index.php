@@ -495,7 +495,9 @@ $vlSetAz   = 360 - $vlRiseAz;
 .modal-card{width:min(880px,100%);max-height:90vh;overflow:auto;background:linear-gradient(160deg,rgba(17,31,49,.98),rgba(8,17,30,.98));border:1px solid var(--line);border-radius:12px;padding:16px}
 .modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
 .modal-head h3{margin:0;color:var(--blue);font-size:18px}
-.modal-close{background:#18283d;border:1px solid #2b4260;color:#dce7f5;border-radius:8px;padding:8px 10px;cursor:pointer;font-weight:900}
+.modal-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.modal-head-btn{min-width:108px;height:40px;display:inline-flex;align-items:center;justify-content:center}
+.modal-close{background:#18283d;border:1px solid #2b4260;color:#dce7f5;border-radius:8px;cursor:pointer;font-weight:900}
 .config-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
 .config-map-block{display:grid;gap:10px}
 .config-map{height:360px;border:1px solid #2b4260;border-radius:10px;overflow:hidden}
@@ -837,7 +839,10 @@ $vlSetAz   = 360 - $vlRiseAz;
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="configModalTitle">
     <div class="modal-head">
       <h3 id="configModalTitle">Configuración de ubicación y horizonte</h3>
-      <button type="button" id="closeConfigModal" class="modal-close">Cerrar</button>
+      <div class="modal-head-actions">
+        <button type="button" id="saveConfigBtn" class="modal-head-btn">Aceptar</button>
+        <button type="button" id="closeConfigModal" class="modal-close modal-head-btn">Cerrar</button>
+      </div>
     </div>
     <div class="config-grid">
       <div class="config-map-block">
@@ -853,7 +858,7 @@ $vlSetAz   = 360 - $vlRiseAz;
           <select id="configFavoritesSelect">
             <option value="">Selecciona una favorita...</option>
             <?php foreach ($favorites as $favorite): ?>
-                      <option value='<?= htmlspecialchars(json_encode($favorite, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8') ?>'><?= htmlspecialchars($favorite['locationName']) ?> · <?= htmlspecialchars((string)$favorite['lat']) ?>, <?= htmlspecialchars((string)$favorite['lon']) ?><?= !empty($favorite['horizonSvg']) ? ' · Horizonte guardado' : '' ?></option>
+                      <option value='<?= htmlspecialchars(json_encode($favorite, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8') ?>'><?= htmlspecialchars($favorite['locationName']) ?> · <?= htmlspecialchars((string)$favorite['lat']) ?>, <?= htmlspecialchars((string)$favorite['lon']) ?></option>
             <?php endforeach; ?>
           </select>
           <div class="config-hint">Las favoritas pueden guardar también su perfil de horizonte.</div>
@@ -873,10 +878,12 @@ $vlSetAz   = 360 - $vlRiseAz;
         <label>
           Horizonte (SILUETA.svg http://peakfinder.com)
           <input id="configSvgFile" type="file" accept=".svg,image/svg+xml">
+          <div id="configCurrentHorizonHint" class="config-hint">Horizonte actual: <?= htmlspecialchars((string)$horizonSvg) ?></div>
         </label>
         <div class="config-status" id="configStatus">Haz clic en el mapa para elegir coordenadas.</div>
         <div class="config-fields-actions">
-          <button type="button" id="saveFavoriteBtn" class="config-secondary-btn">Guardar como favorita</button>
+          <button type="button" id="saveFavoriteBtn" class="config-secondary-btn">Guardar favorito</button>
+          <button type="button" id="deleteFavoriteBtn" class="config-secondary-btn">Eliminar favorito</button>
         </div>
       </div>
     </div>
@@ -890,9 +897,6 @@ $vlSetAz   = 360 - $vlRiseAz;
         <label class="config-vis-label"><input type="checkbox" id="visVlMarkers" checked> Marcadores VL (salida/ocultación)</label>
         <label class="config-vis-label"><input type="checkbox" id="visAutoSpeed" checked> Controles de animación (Auto / Velocidad)</label>
       </div>
-    </div>
-    <div class="config-actions">
-      <button type="button" id="saveConfigBtn">Guardar</button>
     </div>
   </div>
 </div>

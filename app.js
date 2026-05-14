@@ -91,10 +91,12 @@ configLocationNameInput=document.getElementById('configLocationName'),
 configLatInput=document.getElementById('configLat'),
 configLonInput=document.getElementById('configLon'),
 configSvgFileInput=document.getElementById('configSvgFile'),
+configCurrentHorizonHint=document.getElementById('configCurrentHorizonHint'),
 configAddressSearchInput=document.getElementById('configAddressSearch'),
 configAddressSearchBtn=document.getElementById('configAddressSearchBtn'),
 configStatus=document.getElementById('configStatus'),
 saveFavoriteBtn=document.getElementById('saveFavoriteBtn'),
+deleteFavoriteBtn=document.getElementById('deleteFavoriteBtn'),
 saveConfigBtn=document.getElementById('saveConfigBtn');
 
 const focalPresetSelects=Array.from(document.querySelectorAll('[data-focal-select]'));
@@ -585,6 +587,12 @@ function syncFavoriteLocations(favorites){
   }
 }
 
+function updateCurrentHorizonHint(fileName){
+  if(!configCurrentHorizonHint) return;
+  const value=String(fileName || '').trim() || 'default.svg';
+  configCurrentHorizonHint.textContent=`Horizonte actual: ${value}`;
+}
+
 function applyFavoriteSelection(rawValue){
   if(!rawValue) return;
   try{
@@ -601,6 +609,7 @@ function applyFavoriteSelection(rawValue){
     if(configMarker) configMarker.setLatLng([lat,lon]);
     if(configMap) configMap.setView([lat,lon],13);
     PEAKFINDER_FILE=horizonSvgToLoad;
+    updateCurrentHorizonHint(PEAKFINDER_FILE);
     if(window.ASTRO_DATA) window.ASTRO_DATA.horizonSvg=horizonSvgToLoad;
     loadHorizonProfile();
     queueSkyUpdate();
@@ -618,6 +627,7 @@ function openConfigModal(){
   if(configLatInput) configLatInput.value=String(LAT.toFixed(6));
   if(configLonInput) configLonInput.value=String(LON.toFixed(6));
   if(configLocationNameInput) configLocationNameInput.value=LOCATION_NAME;
+  updateCurrentHorizonHint(PEAKFINDER_FILE);
   syncFavoriteLocations(FAVORITE_LOCATIONS);
 
   if(typeof L === 'undefined' || !configMapEl) return;
@@ -679,6 +689,52 @@ async function saveFavoriteLocation(){
     if(configStatus) configStatus.textContent=`Error al guardar favorita: ${error.message}`;
   }finally{
     saveFavoriteBtn.disabled=false;
+  }
+}
+
+async function deleteFavoriteLocation(){
+  if(!configFavoritesSelect || !deleteFavoriteBtn) return;
+  if(!configFavoritesSelect.value){
+    if(configStatus) configStatus.textContent='Selecciona una favorita para eliminar.';
+    return;
+  }
+
+  let favorite;
+  try{
+    favorite=JSON.parse(configFavoritesSelect.value);
+  }catch(error){
+    if(configStatus) configStatus.textContent='La favorita seleccionada no es válida.';
+    return;
+  }
+
+  const locationName=String(favorite.locationName || '').trim();
+  if(!locationName){
+    if(configStatus) configStatus.textContent='No se pudo identificar la favorita a eliminar.';
+    return;
+  }
+
+  if(!window.confirm(`¿Seguro que quieres eliminar la favorita "${locationName}"?`)){
+    return;
+  }
+
+  const formData=new FormData();
+  formData.append('action','delete_favorite');
+  formData.append('locationName',locationName);
+
+  deleteFavoriteBtn.disabled=true;
+  if(configStatus) configStatus.textContent='Eliminando favorita...';
+  try{
+    const response=await fetch('save_config.php',{method:'POST',body:formData});
+    const data=await response.json();
+    if(!response.ok || !data.ok) throw new Error(data && data.error ? data.error : 'No se pudo eliminar la favorita');
+
+    syncFavoriteLocations(data.config.favorites || []);
+    if(configFavoritesSelect) configFavoritesSelect.value='';
+    if(configStatus) configStatus.textContent=`Favorita eliminada: ${locationName}`;
+  }catch(error){
+    if(configStatus) configStatus.textContent=`Error al eliminar favorita: ${error.message}`;
+  }finally{
+    deleteFavoriteBtn.disabled=false;
   }
 }
 
@@ -758,6 +814,7 @@ async function saveConfiguration(){
     LON=Number(data.config.lon);
     LOCATION_NAME=String(data.config.locationName || LOCATION_NAME);
     PEAKFINDER_FILE=String(data.config.horizonSvg || PEAKFINDER_FILE);
+    updateCurrentHorizonHint(PEAKFINDER_FILE);
     FOCAL_PRESET=normalizeFocalPreset(String(data.config.focalPreset || FOCAL_PRESET));
     syncFocalPresetSelects(FOCAL_PRESET);
     ensureValidCoordinates();
@@ -1861,8 +1918,21 @@ if(saveConfigBtn){
 if(saveFavoriteBtn){
   saveFavoriteBtn.addEventListener('click',saveFavoriteLocation);
 }
+if(deleteFavoriteBtn){
+  deleteFavoriteBtn.addEventListener('click',deleteFavoriteLocation);
+}
 if(configFavoritesSelect){
   configFavoritesSelect.addEventListener('change',()=>applyFavoriteSelection(configFavoritesSelect.value));
+}
+if(configSvgFileInput){
+  configSvgFileInput.addEventListener('change',()=>{
+    const file=configSvgFileInput.files && configSvgFileInput.files[0];
+    if(file){
+      updateCurrentHorizonHint(`${PEAKFINDER_FILE} · nuevo fichero seleccionado: ${file.name}`);
+    }else{
+      updateCurrentHorizonHint(PEAKFINDER_FILE);
+    }
+  });
 }
 if(focalPresetSelects.length){
   syncFocalPresetSelects(FOCAL_PRESET);

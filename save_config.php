@@ -24,31 +24,15 @@ $normalizeHorizonSvg = static function (string $value): string {
 $normalizeFocalPreset = static function (string $value): string {
     return in_array($value, ['na', '16mm', '35mm', '50mm'], true) ? $value : 'na';
 };
-
-if (!is_numeric($latRaw) || !is_numeric($lonRaw)) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Lat/Lon invalidas']);
-    exit;
-}
-
-$lat = (float)$latRaw;
-$lon = (float)$lonRaw;
+$lat = null;
+$lon = null;
 $locationName = trim((string)$locationNameRaw);
-if ($locationName === '') {
-    $locationName = 'A Coruña';
-}
 if (function_exists('mb_strlen') && function_exists('mb_substr')) {
     if (mb_strlen($locationName) > 80) {
         $locationName = mb_substr($locationName, 0, 80);
     }
 } elseif (strlen($locationName) > 80) {
     $locationName = substr($locationName, 0, 80);
-}
-
-if ($lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Rangos de coordenadas invalidos']);
-    exit;
 }
 
 $configPath = __DIR__ . '/config.json';
@@ -89,9 +73,58 @@ if (isset($current['favorites']) && is_array($current['favorites'])) {
 
 $focalPreset = $normalizeFocalPreset($postedFocalPreset);
 
+if ($action === 'delete_favorite') {
+    if ($locationName === '') {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Indica qué favorita deseas eliminar']);
+        exit;
+    }
+
+    $beforeCount = count($favorites);
+    $favorites = array_values(array_filter($favorites, static function (array $favorite) use ($locationName): bool {
+        return strcasecmp((string)($favorite['locationName'] ?? ''), $locationName) !== 0;
+    }));
+
+    if (count($favorites) === $beforeCount) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'error' => 'No se encontró la favorita indicada']);
+        exit;
+    }
+
+    $current['favorites'] = $favorites;
+    $encodedFavorites = json_encode($current, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($encodedFavorites === false || file_put_contents($configPath, $encodedFavorites . "\n") === false) {
+        http_response_code(500);
+        echo json_encode(['ok' => false, 'error' => 'No se pudo eliminar la favorita']);
+        exit;
+    }
+
+    echo json_encode(['ok' => true, 'config' => $current], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+if (!is_numeric($latRaw) || !is_numeric($lonRaw)) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'Lat/Lon invalidas']);
+    exit;
+}
+
+$lat = (float)$latRaw;
+$lon = (float)$lonRaw;
+if ($locationName === '') {
+    $locationName = 'A Coruña';
+}
+
+if ($lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'Rangos de coordenadas invalidos']);
+    exit;
+}
+
 if ($action === 'save_favorite') {
     $favoriteHorizonSvg = $normalizeHorizonSvg((string)$current['horizonSvg']);
-    if (isset($_FILES['horizonSvg']) && is_array($_FILES['horizonSvg']) && ($_FILES['horizonSvg']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+    $hasUploadedHorizon = isset($_FILES['horizonSvg']) && is_array($_FILES['horizonSvg']) && ($_FILES['horizonSvg']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+    if ($hasUploadedHorizon) {
         $upload = $_FILES['horizonSvg'];
         if (($upload['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
             http_response_code(400);
@@ -157,7 +190,7 @@ if ($action === 'save_favorite') {
             'locationName' => $locationName,
             'lat' => round($lat, 6),
             'lon' => round($lon, 6),
-            'horizonSvg' => $favoriteHorizonSvg,
+            'horizonSvg' => $hasUploadedHorizon ? $favoriteHorizonSvg : 'default.svg',
         ];
     }
 
