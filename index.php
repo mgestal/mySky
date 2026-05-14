@@ -871,7 +871,7 @@ $vlSetAz   = 360 - $vlRiseAz;
           <input id="configLon" type="number" min="-180" max="180" step="0.000001" value="<?= htmlspecialchars((string)$lon) ?>">
         </label>
         <label>
-          Perfil de horizonte (SVG http://peakfinder.com)
+          Horizonte (SILUETA.svg http://peakfinder.com)
           <input id="configSvgFile" type="file" accept=".svg,image/svg+xml">
         </label>
         <div class="config-status" id="configStatus">Haz clic en el mapa para elegir coordenadas.</div>
