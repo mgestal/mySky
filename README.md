@@ -17,7 +17,7 @@ Visor astronomico web con cuatro modos de representacion, timeline nocturno, sel
 - Configuracion de ubicacion con:
   - Nombre de ubicacion.
   - Localizaciones favoritas guardables y seleccionables.
-  - Coordenadas GPS por clic en mapa o busqueda de direccion.
+  - Coordenadas GPS por clic en mapa (con cambio Mapa/Satelite) o busqueda de direccion.
   - Carga de perfil de horizonte en SVG.
 - Sincronizacion de Peakfinder:
   - Usa por defecto las coordenadas de la ubicacion activa o de la favorita cargada.

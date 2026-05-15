@@ -657,6 +657,8 @@ function setHorizonLayerEnabled(enabled){
 
 let configMap=null;
 let configMarker=null;
+let configMapBaseLayers=null;
+let configMapLayerControl=null;
 
 function syncFavoriteLocations(favorites){
   FAVORITE_LOCATIONS=Array.isArray(favorites) ? favorites.filter(favorite => favorite && Number.isFinite(Number(favorite.lat)) && Number.isFinite(Number(favorite.lon)) && String(favorite.locationName || '').trim()) : [];
@@ -739,10 +741,26 @@ function openConfigModal(){
   if(typeof L === 'undefined' || !configMapEl) return;
   if(!configMap){
     configMap=L.map(configMapEl).setView([LAT,LON],9);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+
+    const streetLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       maxZoom:19,
       attribution:'&copy; OpenStreetMap'
-    }).addTo(configMap);
+    });
+    const satelliteLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+      maxZoom:19,
+      attribution:'Tiles &copy; Esri'
+    });
+
+    configMapBaseLayers={
+      'Mapa': streetLayer,
+      'Satélite': satelliteLayer,
+    };
+
+    streetLayer.addTo(configMap);
+
+    configMapLayerControl=L.control.layers(configMapBaseLayers,null,{collapsed:false});
+    configMapLayerControl.addTo(configMap);
+
     configMarker=L.marker([LAT,LON]).addTo(configMap);
     configMap.on('click',e=>{
       const {lat,lng}=e.latlng;

@@ -514,7 +514,7 @@ $vlSetAz   = 360 - $vlRiseAz;
 .horizon-profile-panorama{fill:none;stroke:rgba(170,208,238,.62);stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round;opacity:.98;filter:drop-shadow(0 0 4px rgba(120,184,238,.45))}
 .panorama-ground-mask{display:none}
 .panorama-ground-cover{position:absolute;left:0;right:0;bottom:0;height:0;background:transparent}
-.inclination-frame{aspect-ratio:2/3;  width: 65%; margin: 0 auto;background:radial-gradient(circle at 50% 0%,rgba(45,98,166,.28),rgba(4,12,24,.9) 58%,rgba(2,7,15,.98) 100%),radial-gradient(circle at 12% 18%,rgba(255,255,255,.55) 0 1.1px,transparent 1.7px),radial-gradient(circle at 78% 11%,rgba(255,255,255,.5) 0 1px,transparent 1.6px),radial-gradient(circle at 64% 52%,rgba(255,255,255,.42) 0 1px,transparent 1.6px),radial-gradient(circle at 35% 71%,rgba(255,255,255,.45) 0 1px,transparent 1.6px),radial-gradient(circle at 48% 37%,rgba(255,255,255,.38) 0 .9px,transparent 1.5px),#040b16;border:1px solid #294769;border-radius:10px;overflow:hidden;position:relative;background-size:cover,72px 72px,86px 86px,98px 98px,112px 112px,130px 130px,auto}
+.inclination-frame{aspect-ratio:2/3;  width: 55%; margin: 0 auto;background:radial-gradient(circle at 50% 0%,rgba(45,98,166,.28),rgba(4,12,24,.9) 58%,rgba(2,7,15,.98) 100%),radial-gradient(circle at 12% 18%,rgba(255,255,255,.55) 0 1.1px,transparent 1.7px),radial-gradient(circle at 78% 11%,rgba(255,255,255,.5) 0 1px,transparent 1.6px),radial-gradient(circle at 64% 52%,rgba(255,255,255,.42) 0 1px,transparent 1.6px),radial-gradient(circle at 35% 71%,rgba(255,255,255,.45) 0 1px,transparent 1.6px),radial-gradient(circle at 48% 37%,rgba(255,255,255,.38) 0 .9px,transparent 1.5px),#040b16;border:1px solid #294769;border-radius:10px;overflow:hidden;position:relative;background-size:cover,72px 72px,86px 86px,98px 98px,112px 112px,130px 130px,auto}
 #inclinationSvg{width:100%;height:100%;display:block}
 .incl-grid{stroke:rgba(220,235,255,.16);stroke-width:1}
 .incl-horizon{stroke:#8fbbe7;stroke-width:2.6;filter:drop-shadow(0 0 6px rgba(135,196,255,.7))}
@@ -658,15 +658,15 @@ $vlSetAz   = 360 - $vlRiseAz;
       <section class="card hero">
         <div class="hero-head">
           <div>
-            <h2>Simulación</h2>
-            <p>Vistas 360 y panorámica arrastables. Inclinación CG basada encuadre 3:2.</p>
+            <h1>MySky App</h1>
+            <p>Planificación fotográfica</p>
           </div>
           <div class="controls">
             <div class="controls-row">
               <div class="view-toggle">
-                <button type="button" id="btn360" class="active">360°</button>
-                <button type="button" id="btnPanorama">Pano</button>
-                <button type="button" id="btnInclination">Incl.</button>
+                <button type="button" id="btn360" class="active">Vista 360°</button>
+                <button type="button" id="btnPanorama">Panorámica</button>
+                <button type="button" id="btnInclination">Inclinación</button>
                 <button type="button" id="btnTerrain">Perfil &nbsp; </button>
               </div>
             </div>
