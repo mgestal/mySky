@@ -117,6 +117,33 @@ function addMinutes(string $hhmm, int $delta): string {
     if ($hhmm === '—') return '—';
     return minutesToHhmm(hhmmToMinutes($hhmm) + $delta);
 }
+
+function sliderValueForTime(string $hhmm, ?bool $forceNextDay = null): ?int {
+  if (!preg_match('/^(\d{2}):(\d{2})$/', $hhmm, $m)) return null;
+  $mins = ((int)$m[1]) * 60 + (int)$m[2];
+  $isNextDay = $forceNextDay ?? ($mins < 12 * 60);
+  $value = $isNextDay ? 1440 + $mins : $mins;
+  if ($value < 1200 || $value > 2040) return null;
+  return $value;
+}
+
+function renderSliderTimeLink(string $hhmm, ?bool $forceNextDay = null): string {
+  if ($hhmm === '—') return '—';
+  $sliderValue = sliderValueForTime($hhmm, $forceNextDay);
+  if ($sliderValue === null) return htmlspecialchars($hhmm, ENT_QUOTES, 'UTF-8');
+  return '<a href="#" class="time-jump-link" data-slider-target="' . $sliderValue . '">' . htmlspecialchars($hhmm, ENT_QUOTES, 'UTF-8') . '</a>';
+}
+
+function isTimeNextDayInNightFrame(string $hhmm, ?bool $forceNextDay = null): bool {
+  $sliderValue = sliderValueForTime($hhmm, $forceNextDay);
+  return $sliderValue !== null && $sliderValue >= 1440;
+}
+
+function renderNextDayBadge(string $hhmm, ?bool $forceNextDay = null): string {
+  if (!isTimeNextDayInNightFrame($hhmm, $forceNextDay)) return '';
+  return ' <span class="time-next-day">(+1)</span>';
+}
+
 function moonPhaseIllumination(string $date): int {
     $knownNewMoon = strtotime('2000-01-06 18:14:00 UTC');
     $t = strtotime($date . ' 12:00:00 UTC');
@@ -566,6 +593,9 @@ $vlSetAz   = 360 - $vlRiseAz;
 .terrain-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(8,17,30,.82);color:#dce9fb;font-size:13px;font-weight:700}
 .terrain-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#18324f;border:1px solid #2f5c8c;color:#dce7f5;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:900;white-space:nowrap}
 .terrain-frame{display:block;width:100%;height:560px;border:0;background:#040b16}
+.time-jump-link{color:#8fc8ff;text-decoration:none;border-bottom:1px dashed rgba(143,200,255,.55);padding-bottom:1px;font-weight:900}
+.time-jump-link:hover,.time-jump-link:focus-visible{color:#c8e7ff;border-bottom-color:#c8e7ff;outline:none}
+.time-next-day{color:#32d4ff;font-weight:bold}
 @media(max-width:900px){.terrain-frame{height:460px}}
 @media(max-width:640px){.view-toggle button{padding:7px 5px;font-size:10px}}
 </style>
@@ -593,23 +623,24 @@ $vlSetAz   = 360 - $vlRiseAz;
       <section class="card">
         <h2>Resumen de tiempos</h2>
         <table class="times">
-          <tr><td>☀️ Salida del Sol</td><td><?= $sunrise ?></td></tr>
-          <tr class="orange"><td>🌅 Puesta del Sol</td><td><?= $sunset ?></td></tr>
-          <tr><td>☾ Salida de la Luna</td><td><?= $moonRise ?><?= $moonRiseNextDay && $moonRise !== '—' ? ' <span style="color:#32d4ff;font-weight:bold">(+1)</span>' : '' ?></td></tr>
-          <tr><td>☽ Puesta de la Luna</td><td><?= $moonSet ?><?= $moonSetNextDay && $moonSet !== '—' ? ' <span style="color:#32d4ff;font-weight:bold">(+1)</span>' : '' ?></td></tr>
+          <tr class="orange"><td>🌅 Puesta del Sol</td><td><?= renderSliderTimeLink($sunset) ?><?= renderNextDayBadge($sunset) ?></td></tr>
+          <tr><td>☀️ Salida del Sol</td><td><?= renderSliderTimeLink($sunrise) ?><?= renderNextDayBadge($sunrise) ?></td></tr>
+          <tr><td>☾ Salida de la Luna</td><td><?= renderSliderTimeLink($moonRise, $moonRiseNextDay) ?><?= renderNextDayBadge($moonRise, $moonRiseNextDay) ?></td></tr>
+          <tr><td>☽ Puesta de la Luna</td><td><?= renderSliderTimeLink($moonSet, $moonSetNextDay) ?><?= renderNextDayBadge($moonSet, $moonSetNextDay) ?></td></tr>
           <tr><td>◐ Iluminación lunar</td><td><?= $moonIllumination ?>%</td></tr>
-          <tr><td>◐ Fin crepúsculo astronómico</td><td><?= $astroEnd ?></td></tr>
-          <tr><td>◑ Inicio crepúsculo astronómico</td><td><?= $astroBegin ?></td></tr>
-          <tr class="green"><td>☼ Salida visible de la Vía Láctea</td><td><?= $vlRise ?></td></tr>
-          <tr class="red"><td>☼ Ocultación de la Vía Láctea</td><td><?= $vlSet ?></td></tr>
-          <tr class="violet"><td>✣ Salida del Centro Galáctico</td><td><?= $gcRise ?></td></tr>
+          <tr><td>◐ Fin crepúsculo astronómico</td><td><?= renderSliderTimeLink($astroEnd) ?><?= renderNextDayBadge($astroEnd) ?></td></tr>
+          <tr><td>◑ Inicio crepúsculo astronómico</td><td><?= renderSliderTimeLink($astroBegin) ?><?= renderNextDayBadge($astroBegin) ?></td></tr>
+          <tr class="green"><td>☼ Salida visible de la Vía Láctea</td><td><?= renderSliderTimeLink($vlRise) ?><?= renderNextDayBadge($vlRise) ?></td></tr>
+          <tr class="red"><td>☼ Ocultación de la Vía Láctea</td><td><?= renderSliderTimeLink($vlSet) ?><?= renderNextDayBadge($vlSet) ?></td></tr>
+          <tr class="violet"><td>✣ Salida del Centro Galáctico</td><td><?= renderSliderTimeLink($gcRise) ?><?= renderNextDayBadge($gcRise) ?></td></tr>
           <tr class="violet"><td>★ Mejor momento Centro Galáctico</td><td><?= $gcBest ?></td></tr>
-          <tr class="violet"><td>○ Puesta del Centro Galáctico</td><td><?= $gcSet ?></td></tr>
+          <tr class="violet"><td>○ Puesta del Centro Galáctico</td><td><?= renderSliderTimeLink($gcSet) ?><?= renderNextDayBadge($gcSet) ?></td></tr>
         </table>
       </section>
       <section class="card info-card">
         <h2>Información</h2>
         <p>Horarios calculados/aproximados para <?= htmlspecialchars($locationName) ?> el <?= htmlspecialchars($displayDate) ?>.</p>
+        <p>En la tabla, <span class="time-next-day">(+1)</span> indica que la hora corresponde al día siguiente dentro de la sesión nocturna.</p>
         <p>La vista panorámica está orientada mirando hacia el Sur: izquierda = E/SE, centro = S, derecha = SO/O.</p>
         <p>La altura máxima de la Vía Láctea se calcula muestreando el plano galáctico visible; la inclinación es la pendiente aparente del arco en la panorámica Sur.</p>
       </section>

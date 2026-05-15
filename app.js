@@ -1870,10 +1870,29 @@ function stopAutoPlay(){
   timer=null;
 }
 
+function jumpToSliderValue(rawValue){
+  if(!slider) return;
+  const min=Number(slider.min);
+  const max=Number(slider.max);
+  const parsed=Number(rawValue);
+  if(!Number.isFinite(parsed) || !Number.isFinite(min) || !Number.isFinite(max)) return;
+  const clamped=Math.max(min,Math.min(max,Math.round(parsed)));
+  slider.value=String(clamped);
+  stopAutoPlay();
+  queueSkyUpdate();
+}
+
 if(slider){
   slider.addEventListener('input',queueSkyUpdate);
   slider.addEventListener('pointerdown',()=>stopAutoPlay());
 }
+
+document.addEventListener('click',event=>{
+  const trigger=event.target instanceof Element ? event.target.closest('.time-jump-link[data-slider-target]') : null;
+  if(!trigger) return;
+  event.preventDefault();
+  jumpToSliderValue(trigger.getAttribute('data-slider-target'));
+});
 
 function getDaySliderBaseDate(){
   const base=(window.ASTRO_DATA&&window.ASTRO_DATA.dayBaseDate)
