@@ -14,6 +14,7 @@ $latRaw = $_POST['lat'] ?? null;
 $lonRaw = $_POST['lon'] ?? null;
 $locationNameRaw = $_POST['locationName'] ?? null;
 $postedHorizonSvg = trim((string)($_POST['currentHorizonSvg'] ?? ''));
+$postedHorizonOffset = $_POST['horizonOffset'] ?? null;
 $postedFocalPreset = trim((string)($_POST['focalPreset'] ?? 'na'));
 
 $normalizeHorizonSvg = static function (string $value): string {
@@ -23,6 +24,16 @@ $normalizeHorizonSvg = static function (string $value): string {
 
 $normalizeFocalPreset = static function (string $value): string {
     return in_array($value, ['na', '16mm', '35mm', '50mm'], true) ? $value : 'na';
+};
+
+$normalizeHorizonOffset = static function ($value, float $fallback = 18.0): float {
+    $parsed = is_numeric($value) ? (float)$value : $fallback;
+    if (!is_finite($parsed)) {
+        $parsed = $fallback;
+    }
+    if ($parsed < -40.0) $parsed = -40.0;
+    if ($parsed > 40.0) $parsed = 40.0;
+    return round($parsed, 2);
 };
 $lat = null;
 $lon = null;
@@ -41,6 +52,7 @@ $current = [
     'lat' => 43.37,
     'lon' => -8.41,
     'horizonSvg' => 'default.svg',
+    'horizonOffset' => 18,
     'focalPreset' => 'na',
     'favorites' => [],
 ];
@@ -60,6 +72,7 @@ if (isset($current['favorites']) && is_array($current['favorites'])) {
         $favoriteLat = isset($favorite['lat']) ? (float)$favorite['lat'] : null;
         $favoriteLon = isset($favorite['lon']) ? (float)$favorite['lon'] : null;
         $favoriteHorizonSvg = $normalizeHorizonSvg((string)($favorite['horizonSvg'] ?? ''));
+        $favoriteHorizonOffset = $normalizeHorizonOffset($favorite['horizonOffset'] ?? null, $normalizeHorizonOffset($current['horizonOffset'] ?? 18));
         if ($favoriteName === '' || !is_float($favoriteLat) || !is_float($favoriteLon)) continue;
         if ($favoriteLat < -90 || $favoriteLat > 90 || $favoriteLon < -180 || $favoriteLon > 180) continue;
         $favorites[] = [
@@ -67,11 +80,14 @@ if (isset($current['favorites']) && is_array($current['favorites'])) {
             'lat' => round($favoriteLat, 6),
             'lon' => round($favoriteLon, 6),
             'horizonSvg' => $favoriteHorizonSvg !== '' ? $favoriteHorizonSvg : 'default.svg',
+            'horizonOffset' => $favoriteHorizonOffset,
         ];
     }
 }
 
 $focalPreset = $normalizeFocalPreset($postedFocalPreset);
+$currentHorizonOffset = $normalizeHorizonOffset($current['horizonOffset'] ?? 18);
+$horizonOffset = $normalizeHorizonOffset($postedHorizonOffset, $currentHorizonOffset);
 
 if ($action === 'delete_favorite') {
     if ($locationName === '') {
@@ -180,6 +196,7 @@ if ($action === 'save_favorite') {
             $favorite['lat'] = round($lat, 6);
             $favorite['lon'] = round($lon, 6);
             $favorite['horizonSvg'] = $favoriteHorizonSvg;
+            $favorite['horizonOffset'] = $horizonOffset;
             $updated = true;
             break;
         }
@@ -191,6 +208,7 @@ if ($action === 'save_favorite') {
             'lat' => round($lat, 6),
             'lon' => round($lon, 6),
             'horizonSvg' => $hasUploadedHorizon ? $favoriteHorizonSvg : 'default.svg',
+            'horizonOffset' => $horizonOffset,
         ];
     }
 
@@ -266,6 +284,7 @@ $newConfig = [
     'lat' => round($lat, 6),
     'lon' => round($lon, 6),
     'horizonSvg' => $horizonSvg,
+    'horizonOffset' => $horizonOffset,
     'focalPreset' => $focalPreset,
     'favorites' => $favorites,
 ];

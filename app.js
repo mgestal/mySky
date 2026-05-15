@@ -97,6 +97,7 @@ configLocationNameInput=document.getElementById('configLocationName'),
 configLatInput=document.getElementById('configLat'),
 configLonInput=document.getElementById('configLon'),
 configSvgFileInput=document.getElementById('configSvgFile'),
+configHorizonOffsetInput=document.getElementById('configHorizonOffset'),
 configCurrentHorizonHint=document.getElementById('configCurrentHorizonHint'),
 configAddressSearchInput=document.getElementById('configAddressSearch'),
 configAddressSearchBtn=document.getElementById('configAddressSearchBtn'),
@@ -128,6 +129,9 @@ const PEAKFINDER_X_SPAN=32760;
 const PEAKFINDER_Y_HORIZON=1816;
 const PEAKFINDER_PX_PER_DEG=56.8;
 const HORIZON_SAMPLES=720;
+const SKY_360_HORIZON_RADIUS=238;
+const DEFAULT_HORIZON_360_PROFILE_OUTWARD_PX=18;
+let HORIZON_360_PROFILE_OUTWARD_PX=normalizeHorizonOffset(window.ASTRO_DATA?.horizonOffset ?? DEFAULT_HORIZON_360_PROFILE_OUTWARD_PX);
 const layerState={planets:false,constellations:false,deepSky:false};
 let selectedObjectId=null;
 let horizonAltitudes=null;
@@ -151,6 +155,12 @@ const FULL_FRAME_SENSOR={width:36,height:24};
 
 function normalizeFocalPreset(value){
   return ['na','16mm','35mm','50mm'].includes(value) ? value : 'na';
+}
+
+function normalizeHorizonOffset(value){
+  const parsed=Number(value);
+  if(!Number.isFinite(parsed)) return DEFAULT_HORIZON_360_PROFILE_OUTWARD_PX;
+  return Math.max(-40,Math.min(40,parsed));
 }
 
 function focalToFov(focalMm,sensorSizeMm){
@@ -387,13 +397,15 @@ function projectPanorama(az,alt){
 
 function project360(az,alt){
   if(alt<=0) return {x:0,y:0,visible:false};
-  const cx=320, cy=320, r=238*(1-Math.min(90,alt)/90);
+  const cx=320, cy=320, r=SKY_360_HORIZON_RADIUS*(1-Math.min(90,alt)/90);
   const a=deg2rad(az-90);
   return {x:cx+r*Math.cos(a), y:cy+r*Math.sin(a), visible:true};
 }
 
 function project360WithHorizon(az,alt){
-  const cx=320, cy=320, r=238*(1-Math.min(90,Math.max(0,alt))/90);
+  const cx=320, cy=320;
+  const terrainRadius=SKY_360_HORIZON_RADIUS+HORIZON_360_PROFILE_OUTWARD_PX;
+  const r=terrainRadius*(1-Math.min(90,Math.max(0,alt))/90);
   const a=deg2rad(az-90);
   return {x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)};
 }
@@ -648,6 +660,10 @@ let configMarker=null;
 
 function syncFavoriteLocations(favorites){
   FAVORITE_LOCATIONS=Array.isArray(favorites) ? favorites.filter(favorite => favorite && Number.isFinite(Number(favorite.lat)) && Number.isFinite(Number(favorite.lon)) && String(favorite.locationName || '').trim()) : [];
+  FAVORITE_LOCATIONS=FAVORITE_LOCATIONS.map(favorite=>({
+    ...favorite,
+    horizonOffset: normalizeHorizonOffset(favorite?.horizonOffset ?? HORIZON_360_PROFILE_OUTWARD_PX),
+  }));
   if(window.ASTRO_DATA) window.ASTRO_DATA.favoriteLocations=FAVORITE_LOCATIONS;
   if(!configFavoritesSelect) return;
 
@@ -680,6 +696,7 @@ function applyFavoriteSelection(rawValue){
     const lon=Number(favorite.lon);
     const locationName=String(favorite.locationName || '').trim();
     const favoriteHorizonSvg=String(favorite.horizonSvg || '').trim();
+    const favoriteHorizonOffset=normalizeHorizonOffset(favorite.horizonOffset ?? HORIZON_360_PROFILE_OUTWARD_PX);
     const horizonSvgToLoad=favoriteHorizonSvg || 'default.svg';
     if(!locationName || !Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Favorita inválida');
     if(configLocationNameInput) configLocationNameInput.value=locationName;
@@ -687,11 +704,16 @@ function applyFavoriteSelection(rawValue){
     if(configLonInput) configLonInput.value=lon.toFixed(6);
     if(configMarker) configMarker.setLatLng([lat,lon]);
     if(configMap) configMap.setView([lat,lon],13);
+    if(configHorizonOffsetInput) configHorizonOffsetInput.value=favoriteHorizonOffset.toFixed(1);
     PEAKFINDER_FILE=horizonSvgToLoad;
+    HORIZON_360_PROFILE_OUTWARD_PX=favoriteHorizonOffset;
     terrainOverrideLocation=null;
     setTerrainBaseLocation(lat,lon,locationName);
     updateCurrentHorizonHint(PEAKFINDER_FILE);
-    if(window.ASTRO_DATA) window.ASTRO_DATA.horizonSvg=horizonSvgToLoad;
+    if(window.ASTRO_DATA){
+      window.ASTRO_DATA.horizonSvg=horizonSvgToLoad;
+      window.ASTRO_DATA.horizonOffset=HORIZON_360_PROFILE_OUTWARD_PX;
+    }
     if(satelliteMap && satelliteEnabled) satelliteMap.setView([lat,lon],satelliteMap.getZoom()||15);
     updateTerrainView(lat,lon,locationName);
     loadHorizonProfile();
@@ -710,6 +732,7 @@ function openConfigModal(){
   if(configLatInput) configLatInput.value=String(LAT.toFixed(6));
   if(configLonInput) configLonInput.value=String(LON.toFixed(6));
   if(configLocationNameInput) configLocationNameInput.value=LOCATION_NAME;
+  if(configHorizonOffsetInput) configHorizonOffsetInput.value=HORIZON_360_PROFILE_OUTWARD_PX.toFixed(1);
   updateCurrentHorizonHint(PEAKFINDER_FILE);
   syncFavoriteLocations(FAVORITE_LOCATIONS);
 
@@ -739,6 +762,7 @@ async function saveFavoriteLocation(){
   if(!configLatInput || !configLonInput || !saveFavoriteBtn) return;
   const lat=Number(configLatInput.value);
   const lon=Number(configLonInput.value);
+  const horizonOffset=normalizeHorizonOffset(configHorizonOffsetInput ? configHorizonOffsetInput.value : HORIZON_360_PROFILE_OUTWARD_PX);
   const locationName=configLocationNameInput ? configLocationNameInput.value.trim() : '';
 
   if(!locationName){
@@ -756,6 +780,7 @@ async function saveFavoriteLocation(){
   formData.append('lat',String(lat));
   formData.append('lon',String(lon));
   formData.append('currentHorizonSvg',PEAKFINDER_FILE);
+  formData.append('horizonOffset',String(horizonOffset));
   if(configSvgFileInput && configSvgFileInput.files && configSvgFileInput.files[0]){
     formData.append('horizonSvg',configSvgFileInput.files[0]);
   }
@@ -867,6 +892,7 @@ async function saveConfiguration(){
   if(!configLatInput || !configLonInput || !saveConfigBtn) return;
   const lat=Number(configLatInput.value);
   const lon=Number(configLonInput.value);
+  const horizonOffset=normalizeHorizonOffset(configHorizonOffsetInput ? configHorizonOffsetInput.value : HORIZON_360_PROFILE_OUTWARD_PX);
   const locationName=configLocationNameInput ? configLocationNameInput.value.trim() : LOCATION_NAME;
 
   if(!Number.isFinite(lat) || lat<-90 || lat>90 || !Number.isFinite(lon) || lon<-180 || lon>180){
@@ -879,6 +905,7 @@ async function saveConfiguration(){
   formData.append('lat',String(lat));
   formData.append('lon',String(lon));
   formData.append('currentHorizonSvg',PEAKFINDER_FILE);
+  formData.append('horizonOffset',String(horizonOffset));
   formData.append('focalPreset',FOCAL_PRESET);
   if(configSvgFileInput && configSvgFileInput.files && configSvgFileInput.files[0]){
     formData.append('horizonSvg',configSvgFileInput.files[0]);
@@ -897,6 +924,8 @@ async function saveConfiguration(){
     LON=Number(data.config.lon);
     LOCATION_NAME=String(data.config.locationName || LOCATION_NAME);
     PEAKFINDER_FILE=String(data.config.horizonSvg || PEAKFINDER_FILE);
+    HORIZON_360_PROFILE_OUTWARD_PX=normalizeHorizonOffset(data.config.horizonOffset ?? HORIZON_360_PROFILE_OUTWARD_PX);
+    if(configHorizonOffsetInput) configHorizonOffsetInput.value=HORIZON_360_PROFILE_OUTWARD_PX.toFixed(1);
     terrainOverrideLocation=null;
     setTerrainBaseLocation(LAT,LON,LOCATION_NAME);
     updateCurrentHorizonHint(PEAKFINDER_FILE);
@@ -908,6 +937,7 @@ async function saveConfiguration(){
       window.ASTRO_DATA.lat=LAT;
       window.ASTRO_DATA.lon=LON;
       window.ASTRO_DATA.horizonSvg=PEAKFINDER_FILE;
+      window.ASTRO_DATA.horizonOffset=HORIZON_360_PROFILE_OUTWARD_PX;
       window.ASTRO_DATA.focalPreset=FOCAL_PRESET;
     }
     updateTerrainView();

@@ -3,13 +3,15 @@
     "lat": 43.321188,
     "lon": -8.911232,
     "horizonSvg": "uploads/horizon_20260514_070105_PeakFinder-Nariga.svg",
+    "horizonOffset": 18,
     "focalPreset": "na",
     "favorites": [
         {
             "locationName": "Punta Nariga",
             "lat": 43.321188,
             "lon": -8.911232,
-            "horizonSvg": "uploads/horizon_20260514_070104_PeakFinder-Nariga.svg"
+            "horizonSvg": "uploads/horizon_20260514_070104_PeakFinder-Nariga.svg",
+            "horizonOffset": 18
         }
     ]
 }

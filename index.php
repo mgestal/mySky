@@ -8,6 +8,7 @@ $defaultConfig = [
   'lat' => 43.37,
   'lon' => -8.41,
   'horizonSvg' => 'default.svg',
+  'horizonOffset' => 18,
   'focalPreset' => 'na',
   'favorites' => [],
 ];
@@ -29,6 +30,11 @@ $horizonSvg = is_string($loadedConfig['horizonSvg'] ?? null) ? $loadedConfig['ho
 if ($horizonSvg === '') {
   $horizonSvg = $defaultConfig['horizonSvg'];
 }
+$horizonOffset = isset($loadedConfig['horizonOffset']) ? (float)$loadedConfig['horizonOffset'] : (float)$defaultConfig['horizonOffset'];
+if (!is_finite($horizonOffset)) {
+  $horizonOffset = (float)$defaultConfig['horizonOffset'];
+}
+$horizonOffset = max(-40.0, min(40.0, $horizonOffset));
 $focalPreset = is_string($loadedConfig['focalPreset'] ?? null) ? $loadedConfig['focalPreset'] : $defaultConfig['focalPreset'];
 if (!in_array($focalPreset, ['na', '16mm', '35mm', '50mm'], true)) {
   $focalPreset = $defaultConfig['focalPreset'];
@@ -46,11 +52,17 @@ if (isset($loadedConfig['favorites']) && is_array($loadedConfig['favorites'])) {
     if ($favoriteHorizonSvg === '') {
       $favoriteHorizonSvg = 'default.svg';
     }
+    $favoriteHorizonOffset = isset($favorite['horizonOffset']) ? (float)$favorite['horizonOffset'] : (float)$horizonOffset;
+    if (!is_finite($favoriteHorizonOffset)) {
+      $favoriteHorizonOffset = (float)$horizonOffset;
+    }
+    $favoriteHorizonOffset = max(-40.0, min(40.0, $favoriteHorizonOffset));
     $favorites[] = [
       'locationName' => $favoriteName,
       'lat' => round($favoriteLat, 6),
       'lon' => round($favoriteLon, 6),
       'horizonSvg' => $favoriteHorizonSvg,
+      'horizonOffset' => round($favoriteHorizonOffset, 2),
     ];
   }
 }
@@ -914,6 +926,11 @@ $vlSetAz   = 360 - $vlRiseAz;
           <input id="configSvgFile" type="file" accept=".svg,image/svg+xml">
           <div id="configCurrentHorizonHint" class="config-hint">Horizonte actual: <?= htmlspecialchars((string)$horizonSvg) ?></div>
         </label>
+        <label>
+          Offset
+          <input id="configHorizonOffset" type="number" min="-40" max="40" step="0.1" value="<?= htmlspecialchars((string)round($horizonOffset, 2)) ?>">
+          <div class="config-hint">Desplazamiento radial del perfil 360 para alinear terreno y horizonte.</div>
+        </label>
         <div class="config-status" id="configStatus">Haz clic en el mapa para elegir coordenadas.</div>
         <div class="config-fields-actions">
           <button type="button" id="saveFavoriteBtn" class="config-secondary-btn">Guardar favorito</button>
@@ -942,6 +959,7 @@ window.ASTRO_DATA = {
   lat: <?= js($lat) ?>,
   lon: <?= js($lon) ?>,
   horizonSvg: <?= js($horizonSvg) ?>,
+  horizonOffset: <?= js(round($horizonOffset, 2)) ?>,
   focalPreset: <?= js($focalPreset) ?>,
   favoriteLocations: <?= js($favorites) ?>,
   dayBaseDate: <?= js($todayDateObj->format('Y-m-d')) ?>,
