@@ -1887,6 +1887,14 @@ if(slider){
   slider.addEventListener('pointerdown',()=>stopAutoPlay());
 }
 
+const dateInput=document.getElementById('date');
+if(dateInput){
+  dateInput.addEventListener('change',()=>{
+    const form=dateInput.form;
+    if(form) form.requestSubmit ? form.requestSubmit() : form.submit();
+  });
+}
+
 document.addEventListener('click',event=>{
   const trigger=event.target instanceof Element ? event.target.closest('.time-jump-link[data-slider-target]') : null;
   if(!trigger) return;

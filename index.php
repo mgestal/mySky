@@ -610,7 +610,7 @@ $vlSetAz   = 360 - $vlRiseAz;
       <button type="button" class="calendar-btn" onclick="openCalendar()" title="Abrir calendario">📅</button>
       <a class="daybtn" href="?date=<?= htmlspecialchars($prevDate) ?>" title="Día anterior">←</a>
       <a class="daybtn" href="?date=<?= htmlspecialchars($nextDate) ?>" title="Día siguiente">→</a>
-      <button type="submit">Actualizar</button>
+      <noscript><button type="submit">Actualizar</button></noscript>
       <div class="header-icons">
         <button type="button" id="headerManualBtn" class="header-icon-btn" title="Manual de usuario">📖</button>
         <button type="button" id="headerConfigBtn" class="header-icon-btn" title="Configuración">⚙️</button>
